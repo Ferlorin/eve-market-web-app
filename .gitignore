@@ -24,3 +24,8 @@ Thumbs.db
 
 # Database
 postgres_data/
+
+# Claude/Agent skills
+.agents/
+.claude/skills/
+.claude/settings.local.json
