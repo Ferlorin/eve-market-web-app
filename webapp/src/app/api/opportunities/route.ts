@@ -71,6 +71,7 @@ interface Opportunity {
   itemName: string;
   buyPrice: number;
   sellPrice: number;
+  profitPerUnit: number;
   buyStation: string;
   sellStation: string;
   roi: number;
@@ -147,12 +148,13 @@ async function calculateOpportunities(
 
   buyPriceMap.forEach((buyData, typeId) => {
     const sellData = sellPriceMap.get(typeId);
-    
+
     if (!sellData) return; // No market for this item in sell region
 
     const buyPrice = buyData.price;
     const sellPrice = sellData.price;
-    const roi = ((sellPrice - buyPrice) / buyPrice) * 100;
+    const profitPerUnit = sellPrice - buyPrice;
+    const roi = (profitPerUnit / buyPrice) * 100;
 
     // Only include profitable opportunities
     if (roi > 0) {
@@ -161,6 +163,7 @@ async function calculateOpportunities(
         itemName: `Item ${typeId}`, // Placeholder - Item names can be loaded separately
         buyPrice: Math.round(buyPrice * 100) / 100, // Round to 2 decimals
         sellPrice: Math.round(sellPrice * 100) / 100,
+        profitPerUnit: Math.round(profitPerUnit * 100) / 100, // Round to 2 decimals
         buyLocationId: buyData.location,
         sellLocationId: sellData.location,
         roi: Math.round(roi * 100) / 100, // Round to 2 decimals
@@ -192,6 +195,7 @@ async function calculateOpportunities(
     itemName: opp.itemName,
     buyPrice: opp.buyPrice,
     sellPrice: opp.sellPrice,
+    profitPerUnit: opp.profitPerUnit,
     buyStation: locationNames.get(opp.buyLocationId) || opp.buyLocationId.toString(),
     sellStation: locationNames.get(opp.sellLocationId) || opp.sellLocationId.toString(),
     roi: opp.roi,

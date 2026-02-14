@@ -9,16 +9,18 @@ export interface Opportunity {
   itemName: string;
   buyPrice: number;
   sellPrice: number;
+  profitPerUnit: number;
   buyStation: string;
   sellStation: string;
   roi: number;
   volumeAvailable: number;
 }
 
-type SortColumn = 
+type SortColumn =
   | 'itemName'
   | 'buyPrice'
   | 'sellPrice'
+  | 'profitPerUnit'
   | 'roi'
   | 'volumeAvailable'
   | 'buyStation'
@@ -53,6 +55,10 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
         case 'sellPrice':
           aVal = a.sellPrice;
           bVal = b.sellPrice;
+          break;
+        case 'profitPerUnit':
+          aVal = a.profitPerUnit;
+          bVal = b.profitPerUnit;
           break;
         case 'roi':
           aVal = a.roi;
@@ -161,8 +167,8 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
         className="border-b border-gray-700 bg-gray-900"
         role="rowgroup"
       >
-        <div 
-          className="grid grid-cols-8 gap-4 px-4 py-3"
+        <div
+          className="grid grid-cols-9 gap-4 px-4 py-3"
           role="row"
         >
           <button
@@ -241,6 +247,21 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           </button>
 
           <button
+            onClick={() => handleSort('profitPerUnit')}
+            className={`${headerButtonClass('profitPerUnit')} text-right font-mono`}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'profitPerUnit'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
+          >
+            Profit/Unit <SortIcon column="profitPerUnit" />
+          </button>
+
+          <button
             onClick={() => handleSort('roi')}
             className={`${headerButtonClass('roi')} text-right font-mono`}
             role="columnheader"
@@ -308,7 +329,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
                 }}
                 role="row"
               >
-                <div className="grid grid-cols-8 gap-4 px-4 py-2 items-center h-full">
+                <div className="grid grid-cols-9 gap-4 px-4 py-2 items-center h-full">
                   {/* Item Name */}
                   <div className="text-sm text-white truncate" role="cell">
                     {opportunity.itemName}
@@ -332,6 +353,11 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
                   {/* Sell Price */}
                   <div className="text-sm text-gray-300 text-right font-mono" role="cell">
                     {formatPrice(opportunity.sellPrice)}
+                  </div>
+
+                  {/* Profit Per Unit */}
+                  <div className="text-sm text-green-400 text-right font-mono font-semibold" role="cell">
+                    {formatPrice(opportunity.profitPerUnit)}
                   </div>
 
                   {/* ROI % */}

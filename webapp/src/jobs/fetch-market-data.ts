@@ -4,7 +4,7 @@ import pLimit from 'p-limit';
 import { logger } from '@/lib/logger';
 import { Prisma } from '@prisma/client';
 
-const limit = pLimit(2); // Very low concurrency to avoid memory issues with large datasets
+const limit = pLimit(1); // Process one region at a time to minimize memory usage
 
 export async function fetchAllRegions() {
   const startTime = Date.now();
@@ -15,16 +15,57 @@ export async function fetchAllRegions() {
     const regionIds = await esiClient.getAllRegions();
     logger.info({ event: 'regions_loaded', count: regionIds.length });
     
-    // Fetch market data for each region in parallel (with concurrency limit)
-    const promises = regionIds.map(regionId => 
-      limit(() => fetchRegionWithRetry(regionId))
-    );
+    // Process regions in sequential batches to prevent memory overflow
+    const BATCH_SIZE = 5;
+    let successful = 0;
+    let failed = 0;
     
-    const results = await Promise.allSettled(promises);
+    for (let i = 0; i < regionIds.length; i += BATCH_SIZE) {
+      const batch = regionIds.slice(i, i + BATCH_SIZE);
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(regionIds.length / BATCH_SIZE);
+      
+      logger.info({
+        event: 'batch_started',
+        batch: batchNum,
+        totalBatches,
+        regions: batch
+      });
+      
+      // Process batch with concurrency limit
+      const promises = batch.map(regionId => 
+        limit(() => fetchRegionWithRetry(regionId))
+      );
+      
+      const results = await Promise.allSettled(promises);
+      
+      // Count results for this batch
+      const batchSuccessful = results.filter(r => r.status === 'fulfilled').length;
+      const batchFailed = results.length - batchSuccessful;
+      successful += batchSuccessful;
+      failed += batchFailed;
+      
+      logger.info({
+        event: 'batch_completed',
+        batch: batchNum,
+        totalBatches,
+        batchSuccessful,
+        batchFailed,
+        totalSuccessful: successful,
+        totalFailed: failed
+      });
+      
+      // Force GC and pause between batches to allow memory cleanup
+      if (global.gc) {
+        global.gc();
+      }
+      
+      // Small delay to allow GC to complete
+      if (i + BATCH_SIZE < regionIds.length) {
+        await sleep(2000);
+      }
+    }
     
-    // Analyze results
-    const successful = results.filter(r => r.status === 'fulfilled').length;
-    const failed = results.length - successful;
     const duration = Date.now() - startTime;
     
     logger.info({
@@ -52,7 +93,7 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const orders = await esiClient.getRegionOrders(regionId);
+      let orders = await esiClient.getRegionOrders(regionId);
       
       // Use transaction to replace all orders for this region atomically
       // Increased timeout for large regions (50K+ orders can take 30+ seconds)
@@ -61,29 +102,41 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
         const deleteResult = await tx.marketOrder.deleteMany({
           where: { regionId }
         });
-        
-        // Insert fresh orders from ESI
+
+        // Insert fresh orders from ESI in batches to prevent heap overflow
+        const BATCH_SIZE = 500; // Smaller batches to reduce memory pressure
+        let totalInserted = 0;
+
         if (orders.length > 0) {
-          await tx.marketOrder.createMany({
-            data: orders.map(order => ({
-              orderId: BigInt(order.order_id),
-              regionId: regionId,
-              typeId: order.type_id,
-              price: new Prisma.Decimal(order.price),
-              volumeRemain: order.volume_remain,
-              locationId: BigInt(order.location_id),
-              isBuyOrder: order.is_buy_order,
-              issued: new Date(order.issued),
-              fetchedAt: new Date()
-            }))
-          });
+          for (let i = 0; i < orders.length; i += BATCH_SIZE) {
+            const batch = orders.slice(i, i + BATCH_SIZE);
+
+            await tx.marketOrder.createMany({
+              data: batch.map(order => ({
+                orderId: BigInt(order.order_id),
+                regionId: regionId,
+                typeId: order.type_id,
+                price: new Prisma.Decimal(order.price),
+                volumeRemain: order.volume_remain,
+                locationId: BigInt(order.location_id),
+                isBuyOrder: order.is_buy_order,
+                issued: new Date(order.issued),
+                fetchedAt: new Date()
+              }))
+            });
+
+            totalInserted += batch.length;
+          }
         }
-        
-        return { deletedCount: deleteResult.count, insertedCount: orders.length };
+
+        return { deletedCount: deleteResult.count, insertedCount: totalInserted };
       }, {
-        timeout: 60000, // 60 second timeout for large regions
-        maxWait: 10000  // Wait up to 10s to acquire transaction lock
+        timeout: 120000, // 120 second timeout for batched inserts
+        maxWait: 10000   // Wait up to 10s to acquire transaction lock
       });
+      
+      // Clear orders array to free memory immediately
+      orders = [];
       
       // Update region timestamp outside transaction (doesn't need atomicity)
       await prisma.region.upsert({
