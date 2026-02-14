@@ -90,28 +90,27 @@ export async function fetchAllRegions() {
 
 async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<void> {
   let lastError: Error | null = null;
-  
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      let orders = await esiClient.getRegionOrders(regionId);
-      
-      // Use transaction to replace all orders for this region atomically
-      // Increased timeout for large regions (50K+ orders can take 30+ seconds)
-      const result = await prisma.$transaction(async (tx) => {
-        // Delete all existing orders for this region
-        const deleteResult = await tx.marketOrder.deleteMany({
-          where: { regionId }
-        });
+      // Delete existing orders for this region first
+      const deleteResult = await prisma.marketOrder.deleteMany({
+        where: { regionId }
+      });
 
-        // Insert fresh orders from ESI in batches to prevent heap overflow
-        const BATCH_SIZE = 500; // Smaller batches to reduce memory pressure
-        let totalInserted = 0;
+      // Stream pages directly to DB — never accumulate all orders in memory
+      let totalInserted = 0;
+      let page = 1;
+      let hasMorePages = true;
+
+      while (hasMorePages) {
+        const { orders, totalPages } = await esiClient.getRegionOrdersPage(regionId, page);
 
         if (orders.length > 0) {
-          for (let i = 0; i < orders.length; i += BATCH_SIZE) {
-            const batch = orders.slice(i, i + BATCH_SIZE);
-
-            await tx.marketOrder.createMany({
+          const INSERT_BATCH = 500;
+          for (let i = 0; i < orders.length; i += INSERT_BATCH) {
+            const batch = orders.slice(i, i + INSERT_BATCH);
+            await prisma.marketOrder.createMany({
               data: batch.map(order => ({
                 orderId: BigInt(order.order_id),
                 regionId: regionId,
@@ -124,46 +123,40 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
                 fetchedAt: new Date()
               }))
             });
-
             totalInserted += batch.length;
           }
         }
 
-        return { deletedCount: deleteResult.count, insertedCount: totalInserted };
-      }, {
-        timeout: 120000, // 120 second timeout for batched inserts
-        maxWait: 10000   // Wait up to 10s to acquire transaction lock
-      });
-      
-      // Clear orders array to free memory immediately
-      orders = [];
-      
-      // Update region timestamp outside transaction (doesn't need atomicity)
+        hasMorePages = page < totalPages;
+        page++;
+      }
+
+      // Update region timestamp
       await prisma.region.upsert({
         where: { regionId },
         update: { lastFetchedAt: new Date() },
         create: {
           regionId,
-          name: `Region ${regionId}`, // Placeholder name
+          name: `Region ${regionId}`,
           lastFetchedAt: new Date()
         }
       });
-      
+
       logger.info({
         event: 'region_fetched',
         regionId,
-        ordersDeleted: result.deletedCount,
-        ordersInserted: result.insertedCount,
+        ordersDeleted: deleteResult.count,
+        ordersInserted: totalInserted,
+        pages: page - 1,
         attempt: attempt + 1
       });
-      
+
       return; // Success
     } catch (error) {
       lastError = error as Error;
-      
-      // Handle ESI 503 errors with exponential backoff
+
       if (error instanceof ESIError && error.statusCode === 503 && attempt < maxRetries - 1) {
-        const delay = 5000 * Math.pow(2, attempt); // 5s, 10s, 20s
+        const delay = 5000 * Math.pow(2, attempt);
         logger.warn({
           event: 'esi_503_retry',
           regionId,
@@ -172,13 +165,11 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
         });
         await sleep(delay);
       } else if (attempt < maxRetries - 1) {
-        // Non-503 errors: short delay before retry
         await sleep(1000);
       }
     }
   }
-  
-  // All retries failed
+
   if (lastError) {
     logger.error({
       event: 'region_fetch_failed',
@@ -187,8 +178,6 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
       attempts: maxRetries
     });
   }
-  
-  // Don't throw - continue with other regions
 }
 
 function sleep(ms: number): Promise<void> {

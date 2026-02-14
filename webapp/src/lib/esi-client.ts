@@ -204,6 +204,30 @@ export class ESIClient {
     }
   }
   
+  async getRegionOrdersPage(regionId: number, page: number): Promise<{ orders: ESIMarketOrder[]; totalPages: number }> {
+    try {
+      const response = await this.axiosInstance.get(
+        `/markets/${regionId}/orders/`,
+        { params: { page } }
+      );
+      const orders = z.array(ESIMarketOrderSchema).parse(response.data);
+      const totalPages = parseInt(response.headers['x-pages'] || '1', 10);
+      return { orders, totalPages };
+    } catch (error) {
+      if (error instanceof ESIError) {
+        error.context = { ...error.context, regionId, page };
+        throw error;
+      }
+      throw new ESIError(
+        `Failed to fetch orders for region ${regionId} page ${page}`,
+        0,
+        `/markets/${regionId}/orders/`,
+        false,
+        { regionId, page }
+      );
+    }
+  }
+
   async getStationName(stationId: number): Promise<string> {
     try {
       const response = await this.axiosInstance.get(
