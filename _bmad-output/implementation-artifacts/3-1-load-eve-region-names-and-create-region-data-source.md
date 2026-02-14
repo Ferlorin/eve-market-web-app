@@ -450,16 +450,79 @@ After this story is complete:
 - TanStack Query: https://tanstack.com/query/latest/docs/react/overview
 - Prisma Seeding: https://www.prisma.io/docs/guides/database/seed-database
 
+## Tasks/Subtasks
+
+### Task 1: Update Seed Script with Real Region Names
+- [x] 1.1: Update `prisma/seed.ts` to fetch regions from ESI
+- [x] 1.2: Fetch region names using ESI `/universe/regions/{id}/` endpoint
+- [x] 1.3: Upsert regions into database
+- [x] 1.4: Run seed script and verify 60+ regions loaded
+
+### Task 2: Create Region Library
+- [x] 2.1: Create `lib/regions.ts` with getAllRegions() function
+- [x] 2.2: Add getRegionById() helper
+- [x] 2.3: Add getRegionByName() helper with case-insensitive search
+
+### Task 3: Create API Route
+- [x] 3.1: Create `app/api/regions/route.ts`
+- [x] 3.2: Implement GET handler with caching (1 hour revalidate)
+- [x] 3.3: Return JSON with success, count, and data fields
+
+### Task 4: Install TanStack Query and Create Hook
+- [x] 4.1: Install @tanstack/react-query
+- [x] 4.2: Create `lib/queries/regions.ts` with useRegions() hook
+- [x] 4.3: Configure staleTime and gcTime
+
+### Task 5: Testing and Verification
+- [x] 5.1: Seed loaded all 113 regions successfully
+- [x] 5.2: API route created and compiled
+- [x] 5.3: Build successful with new /api/regions route
+- [x] 5.4: All components created and typed
+
+### Task 6: Documentation
+- [x] 6.1: Document completion in Dev Agent Record
+- [x] 6.2: List all created files
+- [x] 6.3: Mark story as ready-for-review
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by Dev agent_
+Claude Sonnet 4.5
 
 ### Completion Notes
 
-_To be filled by Dev agent_
+**Completed:** 2026-02-14
+
+**Features Implemented:**
+- Updated seed script to fetch all regions from ESI API
+- Loaded 113 regions (all EVE Online regions including wormholes)
+- Created region library with getAllRegions(), getRegionById(), getRegionByName()
+- Case-insensitive search support for region names
+- API route at `/api/regions` with 1-hour caching
+- TanStack Query hook for client-side data fetching
+- Proper TypeScript types throughout
+
+**Seed Results:**
+- ✅ 113/113 regions loaded successfully
+- Includes all K-space, wormholes, and special regions
+- Rate-limited ESI requests (10ms delay between calls)
+
+**Performance:**
+- Seed time: ~1.5 minutes (113 regions)
+- API caching: 1 hour revalidation
+- Client-side staleTime: 1 hour
+
+**Build Status:** Successful
+
+**Status:** ready-for-review
 
 ### File List
 
-_To be filled by Dev agent_
+**Modified:**
+- `frontend/prisma/seed.ts` - Updated to fetch all regions from ESI with names
+
+**Created:**
+- `frontend/src/lib/regions.ts` - Region library with query functions
+- `frontend/src/app/api/regions/route.ts` - Regions API endpoint
+- `frontend/src/lib/queries/regions.ts` - TanStack Query hook for frontend

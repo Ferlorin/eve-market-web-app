@@ -1,5 +1,4 @@
 // Prisma schema for EVE Market Web App
-// This is the foundation - actual models added in Story 2.1
 
 generator client {
   provider = "prisma-client-js"
@@ -9,7 +8,35 @@ datasource db {
   provider = "postgresql"
 }
 
-// Models will be added in Story 2.1:
-// - Region (EVE region data)
-// - MarketOrder (market order data from ESI API)
+// EVE Online Region Data
+model Region {
+  id             Int       @id @default(autoincrement())
+  regionId       Int       @unique // ESI API region ID (e.g., 10000002 for The Forge)
+  name           String    // Human-readable region name (e.g., "The Forge")
+  lastFetchedAt  DateTime? // Timestamp of last successful market data fetch
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  @@map("regions")
+}
+
+// Market Order Data from ESI API
+model MarketOrder {
+  id            Int      @id @default(autoincrement())
+  regionId      Int      // FK to region (not enforced - regions can be added dynamically)
+  typeId        Int      // EVE item type ID
+  orderId       BigInt   @unique // ESI API order ID (globally unique)
+  price         Decimal  @db.Decimal(20, 2) // Order price (ISK)
+  volumeRemain  Int      // Quantity still available
+  locationId    BigInt   // Station/structure ID where order is placed
+  isBuyOrder    Boolean  // true = buy order, false = sell order
+  issued        DateTime // When the order was created
+  fetchedAt     DateTime // When we fetched this data from ESI
+  
+  // Composite index for ROI query performance (NFR-P7: <500ms server-side)
+  @@index([regionId, typeId])
+  @@map("market_orders")
+}
+
 

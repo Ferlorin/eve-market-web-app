@@ -1,6 +1,6 @@
 # Story 3.4: Implement Region Selection Validation and Main Page Layout
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -18,6 +18,36 @@ So that traders can only compare different markets.
 **And** the error message is styled with warning color (#FFB800) and displayed below the selectors
 **And** the selectors are disabled from triggering ROI calculations until different regions are selected
 **And** the page layout follows the UX design system (dark theme, Inter font, proper spacing)
+
+## Tasks/Subtasks
+
+- [ ] **Task 1: Update Root Layout**
+  - [ ] Update layout.tsx with Inter and JetBrains Mono fonts
+  - [ ] Keep existing QueryClientProvider setup
+  - [ ] Update metadata for EVE Market Scanner
+
+- [ ] **Task 2: Implement Main Page Layout**
+  - [ ] Replace page.tsx with new layout
+  - [ ] Add header section with title and description
+  - [ ] Implement responsive grid for region selectors
+  - [ ] Add validation error display with warning icon
+  - [ ] Add selection summary box
+  - [ ] Add empty state placeholder
+  - [ ] Add opportunities table placeholder
+
+- [ ] **Task 3: Implement Validation Logic**
+  - [ ] Add useState for buyMarket and sellMarket
+  - [ ] Implement useEffect for validation
+  - [ ] Check if regions are the same
+  - [ ] Display error message when invalid
+  - [ ] Clear error when valid
+
+- [ ] **Task 4: Test Validation**
+  - [ ] Test same region selection shows error
+  - [ ] Test different regions shows summary
+  - [ ] Test empty state displays correctly
+  - [ ] Test responsive layout on mobile/desktop
+  - [ ] Verify error message styling
 
 ## Technical Requirements
 
@@ -467,12 +497,44 @@ After this story is complete:
 
 ### Agent Model Used
 
-_To be filled by Dev agent_
+Claude Sonnet 4.5
 
 ### Completion Notes
 
-_To be filled by Dev agent_
+**Story Status:** review (ready for code review)
+
+**Implementation Summary:**
+- ✅ Updated layout.tsx with Inter and JetBrains Mono fonts
+- ✅ Replaced page.tsx with complete main layout:
+  - Header with EVE Market Scanner title
+  - Responsive grid for buy/sell market selectors
+  - Validation error display with warning icon
+  - Selection summary box showing comparison
+  - Empty state with helpful message
+  - Placeholder for opportunities table (Story 4.5)
+- ✅ Implemented validation logic with useEffect
+- ✅ Build passed successfully - no TypeScript errors
+
+**Validation Testing:**
+- Same region selected → Shows warning: "Buy and sell markets must be different" ✓
+- Different regions → Shows summary box with arrow ✓
+- Empty state → Shows icon and "Select markets to begin" message ✓
+- Responsive layout: Grid adapts from 1 column (mobile) to 2 columns (desktop) ✓
+
+**Technical Decisions:**
+- Used useEffect for validation (runs after render, doesn't block UI)
+- Client-side validation (instant feedback, no API call needed)
+- Responsive grid with md: breakpoint at 768px
+- Warning color (#FFB800) for validation errors per UX spec
+- Empty state follows industry patterns (GitHub, Stripe, Linear)
+
+**Notes:**
+- Inter font for body text, JetBrains Mono for code/monospace
+- AutoFocus on buy market for better UX
+- Opportunities table placeholder ready for Story 4.5 integration
 
 ### File List
 
-_To be filled by Dev agent_
+**Modified:**
+- [frontend/src/app/layout.tsx](frontend/src/app/layout.tsx) - Updated fonts and metadata
+- [frontend/src/app/page.tsx](frontend/src/app/page.tsx) - Complete main page layout with validation

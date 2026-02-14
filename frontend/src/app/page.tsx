@@ -1,64 +1,165 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState, useEffect } from 'react';
+import { RegionSelector } from '@/components/RegionSelector';
+import { useRegions } from '@/lib/queries/regions';
+import type { Region } from '@/lib/regions';
+
+export default function HomePage() {
+  const { data: regions, isLoading } = useRegions();
+  const [buyMarket, setBuyMarket] = useState<Region | null>(null);
+  const [sellMarket, setSellMarket] = useState<Region | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Validate market selection
+  useEffect(() => {
+    if (buyMarket && sellMarket) {
+      if (buyMarket.regionId === sellMarket.regionId) {
+        setValidationError('Buy and sell markets must be different');
+      } else {
+        setValidationError(null);
+      }
+    } else {
+      setValidationError(null);
+    }
+  }, [buyMarket, sellMarket]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-eve-blue mb-4"></div>
+          <p className="text-gray-400">Loading regions...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            EVE Market Web App - Hot Reload Test ✓
+    <div className="min-h-screen bg-gray-900">
+      {/* Header */}
+      <header className="border-b border-gray-700 bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <h1 className="text-2xl font-bold text-white">
+            EVE Market Scanner
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-sm text-gray-400 mt-1">
+            Find profitable trading opportunities across regions
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Market Selection Section */}
+        <section className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <RegionSelector
+              label="Buy Market"
+              placeholder="Select region to buy from..."
+              value={buyMarket}
+              onChange={setBuyMarket}
+              regions={regions ?? []}
+              autoFocus
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+            <RegionSelector
+              label="Sell Market"
+              placeholder="Select region to sell in..."
+              value={sellMarket}
+              onChange={setSellMarket}
+              regions={regions ?? []}
+            />
+          </div>
+
+          {/* Validation Error */}
+          {validationError && (
+            <div 
+              className="mt-4 flex items-center gap-2 px-4 py-3 rounded-lg bg-eve-gold/10 border border-eve-gold"
+              role="alert"
+              aria-live="polite"
+            >
+              <svg
+                className="h-5 w-5 text-eve-gold flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-sm text-eve-gold font-medium">
+                {validationError}
+              </span>
+            </div>
+          )}
+
+          {/* Selection Summary */}
+          {buyMarket && sellMarket && !validationError && (
+            <div className="mt-4 p-4 rounded-lg bg-gray-800 border border-gray-700">
+              <p className="text-sm text-gray-400 mb-2">
+                Comparing opportunities:
+              </p>
+              <div className="flex items-center gap-4 text-white">
+                <span className="font-medium">{buyMarket.name}</span>
+                <svg
+                  className="h-5 w-5 text-eve-blue"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+                <span className="font-medium">{sellMarket.name}</span>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Opportunities Table (placeholder for Story 4.5) */}
+        {buyMarket && sellMarket && !validationError && (
+          <section>
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
+              <p className="text-gray-400">
+                Opportunities table will appear here (Story 4.5)
+              </p>
+            </div>
+          </section>
+        )}
+
+        {/* Empty State */}
+        {(!buyMarket || !sellMarket) && (
+          <section>
+            <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              <h3 className="mt-4 text-lg font-medium text-white">
+                Select markets to begin
+              </h3>
+              <p className="mt-2 text-sm text-gray-400 max-w-md mx-auto">
+                Choose a buy market and a sell market to see profitable trading opportunities across EVE regions.
+              </p>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

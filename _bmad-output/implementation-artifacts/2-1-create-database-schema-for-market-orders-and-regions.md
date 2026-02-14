@@ -342,16 +342,66 @@ After this story is complete:
 - [Epic 2: Story 2.1](../planning-artifacts/epics.md#story-21-create-database-schema-for-market-orders-and-regions)
 - Prisma Schema Reference: https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference
 
+## Tasks/Subtasks
+
+### Task 1: Update Prisma Schema
+- [x] 1.1: Add Region model to `prisma/schema.prisma`
+- [x] 1.2: Add MarketOrder model with composite index
+- [x] 1.3: Verify schema syntax is correct
+
+### Task 2: Create Database Migration
+- [x] 2.1: Run `npx prisma migrate dev --name add_regions_and_orders`
+- [x] 2.2: Verify migration creates tables successfully
+- [x] 2.3: Generate Prisma Client with `npx prisma generate`
+
+### Task 3: Create Seed File (Optional)
+- [x] 3.1: Create `prisma/seed.ts` with region data
+- [x] 3.2: Add seed script to `prisma.config.ts`
+- [x] 3.3: Run `npx prisma db seed` to populate initial data
+
+### Task 4: Verify Database Schema
+- [x] 4.1: Check tables exist in PostgreSQL
+- [x] 4.2: Verify composite index on market_orders
+- [x] 4.3: Test Prisma Client queries
+- [x] 4.4: Open Prisma Studio and verify tables visible
+
+### Task 5: Documentation
+- [x] 5.1: Document completion in Dev Agent Record
+- [x] 5.2: List all modified/created files
+- [x] 5.3: Mark story as ready-for-review
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by Dev agent_
+Claude Sonnet 4.5
 
 ### Completion Notes
 
-_To be filled by Dev agent_
+**Completed:** 2026-02-14
+
+**Migration:**
+- Migration name: `20260214201515_add_regions_and_orders`
+- Created tables: `regions`, `market_orders`
+- Composite index: `market_orders_regionId_typeId_idx` on (regionId, typeId)
+
+**Seed Data:**
+- Seeded 10 EVE regions (The Forge, Domain, Heimatar, etc.)
+- Used Prisma adapter pattern with pg Pool for seed compatibility
+
+**Build Status:**
+- Build completed successfully
+- All TypeScript types generated
+- Prisma Client v7.4.0
+
+**Status:** ready-for-review
 
 ### File List
 
-_To be filled by Dev agent_
+**Modified:**
+- `frontend/prisma/schema.prisma` - Added Region and MarketOrder models
+- `frontend/prisma.config.ts` - Added seed command configuration
+
+**Created:**
+- `frontend/prisma/migrations/20260214201515_add_regions_and_orders/migration.sql` - Database migration
+- `frontend/prisma/seed.ts` - Database seed file with initial regions

@@ -1,0 +1,298 @@
+'use client';
+
+import { useRef, useState, useMemo } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/20/solid';
+
+export interface Opportunity {
+  typeId: number;
+  itemName: string;
+  buyPrice: number;
+  sellPrice: number;
+  buyStation: string;
+  sellStation: string;
+  roi: number;
+  volumeAvailable: number;
+}
+
+type SortColumn = 
+  | 'itemName'
+  | 'buyPrice'
+  | 'sellPrice'
+  | 'roi'
+  | 'volumeAvailable'
+  | 'buyStation'
+  | 'sellStation';
+
+type SortDirection = 'asc' | 'desc';
+
+interface OpportunityTableProps {
+  data: Opportunity[];
+}
+
+export function OpportunityTable({ data }: OpportunityTableProps) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const [sortColumn, setSortColumn] = useState<SortColumn>('roi');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Sort data
+  const sortedData = useMemo(() => {
+    const sorted = [...data].sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+
+      switch (sortColumn) {
+        case 'itemName':
+          aVal = a.itemName.toLowerCase();
+          bVal = b.itemName.toLowerCase();
+          break;
+        case 'buyPrice':
+          aVal = a.buyPrice;
+          bVal = b.buyPrice;
+          break;
+        case 'sellPrice':
+          aVal = a.sellPrice;
+          bVal = b.sellPrice;
+          break;
+        case 'roi':
+          aVal = a.roi;
+          bVal = b.roi;
+          break;
+        case 'volumeAvailable':
+          aVal = a.volumeAvailable;
+          bVal = b.volumeAvailable;
+          break;
+        case 'buyStation':
+          aVal = a.buyStation;
+          bVal = b.buyStation;
+          break;
+        case 'sellStation':
+          aVal = a.sellStation;
+          bVal = b.sellStation;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [data, sortColumn, sortDirection]);
+
+  const virtualizer = useVirtualizer({
+    count: sortedData.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48,
+    overscan: 10,
+  });
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column: default to descending for numbers, ascending for text
+      setSortColumn(column);
+      setSortDirection(column === 'itemName' ? 'asc' : 'desc');
+    }
+
+    // Scroll to top after sort
+    if (parentRef.current) {
+      parentRef.current.scrollTop = 0;
+    }
+  };
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) return null;
+    
+    return sortDirection === 'asc' ? (
+      <ChevronUpIcon className="h-4 w-4 inline ml-1" />
+    ) : (
+      <ChevronDownIcon className="h-4 w-4 inline ml-1" />
+    );
+  };
+
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const formatROI = (roi: number) => {
+    return roi.toFixed(2) + '%';
+  };
+
+  const formatVolume = (volume: number) => {
+    if (volume >= 1000000) {
+      return (volume / 1000000).toFixed(1) + 'M';
+    } else if (volume >= 1000) {
+      return (volume / 1000).toFixed(1) + 'K';
+    }
+    return volume.toLocaleString();
+  };
+
+  const headerButtonClass = (column: SortColumn) =>
+    `w-full text-left px-0 py-0 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer
+    ${sortColumn === column ? 'text-eve-blue' : 'text-gray-300 hover:text-white'}
+    focus:outline-none focus-visible:ring-2 focus-visible:ring-eve-blue rounded`;
+
+  if (data.length === 0) {
+    return (
+      <div className="w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+        <div className="p-12 text-center">
+          <p className="text-gray-400">No opportunities found</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+      {/* Fixed Table Header with Sortable Columns */}
+      <div className="border-b border-gray-700 bg-gray-900">
+        <div className="grid grid-cols-8 gap-4 px-4 py-3">
+          <button
+            onClick={() => handleSort('itemName')}
+            className={headerButtonClass('itemName')}
+          >
+            Item <SortIcon column="itemName" />
+          </button>
+
+          <button
+            onClick={() => handleSort('buyStation')}
+            className={`${headerButtonClass('buyStation')} text-center`}
+          >
+            Buy Station <SortIcon column="buyStation" />
+          </button>
+
+          <button
+            onClick={() => handleSort('sellStation')}
+            className={`${headerButtonClass('sellStation')} text-center`}
+          >
+            Sell Station <SortIcon column="sellStation" />
+          </button>
+
+          <button
+            onClick={() => handleSort('buyPrice')}
+            className={`${headerButtonClass('buyPrice')} text-right font-mono`}
+          >
+            Buy Price <SortIcon column="buyPrice" />
+          </button>
+
+          <button
+            onClick={() => handleSort('sellPrice')}
+            className={`${headerButtonClass('sellPrice')} text-right font-mono`}
+          >
+            Sell Price <SortIcon column="sellPrice" />
+          </button>
+
+          <button
+            onClick={() => handleSort('roi')}
+            className={`${headerButtonClass('roi')} text-right font-mono`}
+          >
+            ROI% <SortIcon column="roi" />
+          </button>
+
+          <button
+            onClick={() => handleSort('volumeAvailable')}
+            className={`${headerButtonClass('volumeAvailable')} text-right font-mono`}
+          >
+            Quantity <SortIcon column="volumeAvailable" />
+          </button>
+
+          <div className="text-right text-xs font-semibold text-gray-300 uppercase tracking-wider font-mono">
+            Volume
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable Table Body with Virtual Scrolling */}
+      <div
+        ref={parentRef}
+        className="h-[600px] overflow-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
+      >
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const opportunity = sortedData[virtualRow.index];
+            const isEven = virtualRow.index % 2 === 0;
+
+            return (
+              <div
+                key={virtualRow.key}
+                className={`absolute top-0 left-0 w-full ${
+                  isEven ? 'bg-gray-800' : 'bg-gray-850'
+                }`}
+                style={{
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <div className="grid grid-cols-8 gap-4 px-4 py-2 items-center h-full">
+                  {/* Item Name */}
+                  <div className="text-sm text-white truncate">
+                    {opportunity.itemName}
+                  </div>
+
+                  {/* Buy Station */}
+                  <div className="text-sm text-gray-300 text-center font-mono">
+                    {opportunity.buyStation}
+                  </div>
+
+                  {/* Sell Station */}
+                  <div className="text-sm text-gray-300 text-center font-mono">
+                    {opportunity.sellStation}
+                  </div>
+
+                  {/* Buy Price */}
+                  <div className="text-sm text-gray-300 text-right font-mono">
+                    {formatPrice(opportunity.buyPrice)}
+                  </div>
+
+                  {/* Sell Price */}
+                  <div className="text-sm text-gray-300 text-right font-mono">
+                    {formatPrice(opportunity.sellPrice)}
+                  </div>
+
+                  {/* ROI % */}
+                  <div className="text-sm text-eve-blue text-right font-mono font-semibold">
+                    {formatROI(opportunity.roi)}
+                  </div>
+
+                  {/* Quantity */}
+                  <div className="text-sm text-gray-300 text-right font-mono">
+                    {opportunity.volumeAvailable.toLocaleString()}
+                  </div>
+
+                  {/* Volume (M3) */}
+                  <div className="text-sm text-gray-300 text-right font-mono">
+                    {formatVolume(opportunity.volumeAvailable)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Footer with Row Count and Sort Info */}
+      <div className="border-t border-gray-700 bg-gray-900 px-4 py-2 flex justify-between items-center">
+        <p className="text-xs text-gray-400">
+          Showing {sortedData.length.toLocaleString()} opportunities
+        </p>
+        <p className="text-xs text-gray-500">
+          Sorted by {sortColumn} ({sortDirection})
+        </p>
+      </div>
+    </div>
+  );
+}

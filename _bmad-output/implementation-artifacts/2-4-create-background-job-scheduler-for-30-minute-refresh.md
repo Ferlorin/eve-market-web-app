@@ -398,16 +398,83 @@ After this story is complete:
 - Cron Expression Guide: https://crontab.guru/
 - node-cron: https://github.com/node-cron/node-cron
 
+## Tasks/Subtasks
+
+### Task 1: Create Vercel Cron Configuration
+- [x] 1.1: Create `vercel.json` in project root
+- [x] 1.2: Configure cron schedule (every 30 minutes)
+- [x] 1.3: Set API endpoint path
+
+### Task 2: Create Cron API Endpoint
+- [x] 2.1: Create `app/api/cron/fetch-markets/route.ts`
+- [x] 2.2: Implement GET handler with authentication
+- [x] 2.3: Add maxDuration configuration
+- [x] 2.4: Add structured logging
+
+### Task 3: Configure Environment Variables
+- [x] 3.1: Add CRON_SECRET to `.env.local`
+- [x] 3.2: Generate secure random secret
+- [x] 3.3: Document in .env.example
+
+### Task 4: Create Local Development Scripts
+- [x] 4.1: Install node-cron for local dev
+- [x] 4.2: Create `scripts/dev-cron.ts`
+- [x] 4.3: Add scripts to package.json
+
+### Task 5: Testing and Verification
+- [x] 5.1: Test API endpoint creation (build passes)
+- [x] 5.2: Verify authentication configured
+- [x] 5.3: Verify dev-cron script created
+- [x] 5.4: Verify structured logging in place
+
+### Task 6: Documentation
+- [x] 6.1: Document completion in Dev Agent Record
+- [x] 6.2: List all created files
+- [x] 6.3: Mark story as ready-for-review
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by Dev agent_
+Claude Sonnet 4.5
 
 ### Completion Notes
 
-_To be filled by Dev agent_
+**Completed:** 2026-02-14
+
+**Features Implemented:**
+- Vercel cron configuration (every 30 minutes)
+- API endpoint at `/api/cron/fetch-markets` with auth
+- CRON_SECRET environment variable (secure random 64-char hex)
+- maxDuration set to 600 seconds (10 minutes)
+- Local dev-cron script with node-cron
+- Test scripts for endpoint verification
+- Structured JSON logging for all cron events
+
+**Configuration:**
+- Cron schedule: `*/30 * * * *` (every 30 minutes)
+- Max duration: 10 minutes (Vercel limit)
+- Auth: Bearer token via CRON_SECRET
+- Local development: npm run dev-cron
+
+**Testing:**
+- Build successful with API route created
+- All authentication configured
+- Scripts ready for testing when dev server runs
+
+**Build Status:** Successful
+
+**Status:** ready-for-review
 
 ### File List
 
-_To be filled by Dev agent_
+**Created:**
+- `frontend/vercel.json` - Vercel cron configuration
+- `frontend/src/app/api/cron/fetch-markets/route.ts` - Cron API endpoint
+- `frontend/scripts/dev-cron.ts` - Local development cron scheduler  
+- `frontend/scripts/test-cron-endpoint.ts` - Endpoint testing script
+- `frontend/.env.example` - Environment variable template
+
+**Modified:**
+- `frontend/.env.local` - Added CRON_SECRET
+- `frontend/package.json` - Added dev-cron script
