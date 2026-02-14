@@ -12,11 +12,13 @@ function generateMockData(count: number): Opportunity[] {
     const buyPrice = Math.random() * 1000 + 100;
     const sellPrice = buyPrice * (1 + Math.random() * 0.5);
     
+    const profitPerUnit = sellPrice - buyPrice;
     data.push({
       typeId: 34 + i,
       itemName: items[i % items.length] + ` (${i})`,
       buyPrice,
       sellPrice,
+      profitPerUnit,
       buyStation: stations[Math.floor(Math.random() * stations.length)],
       sellStation: stations[Math.floor(Math.random() * stations.length)],
       roi: ((sellPrice - buyPrice) / buyPrice) * 100,

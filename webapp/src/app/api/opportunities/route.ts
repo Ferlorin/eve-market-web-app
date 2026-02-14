@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { locationService } from '@/lib/location-service';
+import { itemTypeService } from '@/lib/item-type-service';
 import { z } from 'zod';
 
 // Request validation schema
@@ -156,11 +157,11 @@ async function calculateOpportunities(
     const profitPerUnit = sellPrice - buyPrice;
     const roi = (profitPerUnit / buyPrice) * 100;
 
-    // Only include profitable opportunities
-    if (roi > 0) {
+    // Only include profitable opportunities with valid data
+    if (roi > 0 && buyPrice > 0 && sellPrice > 0 && isFinite(roi)) {
       opportunities.push({
         typeId,
-        itemName: `Item ${typeId}`, // Placeholder - Item names can be loaded separately
+        itemName: '', // Resolved after sorting
         buyPrice: Math.round(buyPrice * 100) / 100, // Round to 2 decimals
         sellPrice: Math.round(sellPrice * 100) / 100,
         profitPerUnit: Math.round(profitPerUnit * 100) / 100, // Round to 2 decimals
@@ -178,26 +179,29 @@ async function calculateOpportunities(
   // Limit to top 1000 to keep response under 2MB
   const topOpportunities = opportunities.slice(0, 1000);
 
-  // Batch fetch location names for all unique locations
+  // Batch fetch location names and item type names in parallel
   const uniqueLocationIds = new Set<bigint>();
+  const uniqueTypeIds = new Set<number>();
   topOpportunities.forEach((opp) => {
     uniqueLocationIds.add(opp.buyLocationId);
     uniqueLocationIds.add(opp.sellLocationId);
+    uniqueTypeIds.add(opp.typeId);
   });
 
-  const locationNames = await locationService.getLocationNames(
-    Array.from(uniqueLocationIds)
-  );
+  const [locationNames, typeNames] = await Promise.all([
+    locationService.getLocationNames(Array.from(uniqueLocationIds)),
+    itemTypeService.getTypeNames(Array.from(uniqueTypeIds)),
+  ]);
 
-  // Map location IDs to names
+  // Map location IDs and type IDs to names
   const finalOpportunities: Opportunity[] = topOpportunities.map((opp) => ({
     typeId: opp.typeId,
-    itemName: opp.itemName,
+    itemName: typeNames.get(opp.typeId) || `Type ${opp.typeId}`,
     buyPrice: opp.buyPrice,
     sellPrice: opp.sellPrice,
     profitPerUnit: opp.profitPerUnit,
-    buyStation: locationNames.get(opp.buyLocationId) || opp.buyLocationId.toString(),
-    sellStation: locationNames.get(opp.sellLocationId) || opp.sellLocationId.toString(),
+    buyStation: locationNames.get(opp.buyLocationId) || `Station ${opp.buyLocationId}`,
+    sellStation: locationNames.get(opp.sellLocationId) || `Station ${opp.sellLocationId}`,
     roi: opp.roi,
     volumeAvailable: opp.volumeAvailable,
   }));

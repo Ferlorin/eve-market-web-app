@@ -39,6 +39,16 @@ model MarketOrder {
   @@map("market_orders")
 }
 
+// Item Type Cache (EVE item names from ESI)
+model ItemType {
+  id        Int      @id @default(autoincrement())
+  typeId    Int      @unique // ESI type ID
+  name      String   // Human-readable item name
+  fetchedAt DateTime @default(now())
+
+  @@map("item_types")
+}
+
 // Location Cache (Stations and Structures)
 model Location {
   id         Int      @id @default(autoincrement())

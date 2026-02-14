@@ -23,6 +23,11 @@ const ESIRegionSchema = z.object({
   name: z.string().optional(),
 });
 
+const ESITypeSchema = z.object({
+  type_id: z.number(),
+  name: z.string(),
+});
+
 const ESIStationSchema = z.object({
   station_id: z.number(),
   name: z.string(),
@@ -222,6 +227,22 @@ export class ESIClient {
     }
   }
   
+  async getTypeName(typeId: number): Promise<string | null> {
+    try {
+      const response = await this.axiosInstance.get(
+        `/universe/types/${typeId}/`
+      );
+      const type = ESITypeSchema.parse(response.data);
+      return type.name;
+    } catch (error) {
+      if (error instanceof ESIError && error.statusCode === 404) {
+        return null;
+      }
+      console.warn(`Failed to fetch type ${typeId}:`, error);
+      return null;
+    }
+  }
+
   async getStructureName(structureId: bigint): Promise<string | null> {
     try {
       const response = await this.axiosInstance.get(
