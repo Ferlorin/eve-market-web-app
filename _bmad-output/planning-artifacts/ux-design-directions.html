@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVE Market Web App - Design Directions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0A0E12;
+            color: #E8ECEF;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            border-bottom: 2px solid #2A3441;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 12px;
+            color: #33B5E5;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: #B0B8C1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .controls button {
+            background: #1E252E;
+            border: 1px solid #2A3441;
+            color: #E8ECEF;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .controls button:hover {
+            background: #2A3441;
+            border-color: #33B5E5;
+            color: #33B5E5;
+        }
+
+        .controls button.active {
+            background: #33B5E5;
+            border-color: #33B5E5;
+            color: #0A0E12;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 24px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .direction-card {
+            background: #151921;
+            border: 2px solid #2A3441;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .direction-card:hover {
+            border-color: #33B5E5;
+            box-shadow: 0 0 16px rgba(51, 181, 229, 0.2);
+        }
+
+        .direction-header {
+            background: #1E252E;
+            padding: 16px;
+            border-bottom: 1px solid #2A3441;
+        }
+
+        .direction-header h2 {
+            font-size: 18px;
+            color: #33B5E5;
+            margin-bottom: 8px;
+        }
+
+        .direction-header p {
+            font-size: 13px;
+            color: #B0B8C1;
+            line-height: 1.5;
+        }
+
+        .direction-preview {
+            padding: 16px;
+            background: #0A0E12;
+            min-height: 500px;
+        }
+
+        /* Direction-specific styles */
+        .mockup-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .selectors {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .selector {
+            flex: 1;
+            background: #1E252E;
+            border: 1px solid #2A3441;
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #B0B8C1;
+        }
+
+        .table-mock {
+            background: #0A0E12;
+            border: 1px solid #2A3441;
+        }
+
+        .table-header {
+            background: #151921;
+            padding: 10px 12px;
+            display: grid;
+            font-size: 12px;
+            font-weight: 600;
+            border-bottom: 2px solid #2A3441;
+        }
+
+        .table-row {
+            padding: 8px 12px;
+            display: grid;
+            font-size: 12px;
+            border-bottom: 1px solid #2A3441;
+        }
+
+        .table-row:nth-child(even) {
+            background: #151921;
+        }
+
+        .table-row:hover {
+            background: #1E252E;
+        }
+
+        .mono {
+            font-family: 'Courier New', monospace;
+            color: #E8ECEF;
+        }
+
+        .roi-high {
+            color: #00D97E;
+        }
+
+        .roi-medium {
+            color: #B0B8C1;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: #00D97E;
+            text-align: right;
+            margin-top: 16px;
+        }
+
+        /* Direction 1: Classic Bloomberg */
+        .dir1 .table-header,
+        .dir1 .table-row {
+            grid-template-columns: 2fr 1.2fr 1.2fr 1fr 1fr 1fr 0.8fr 1fr;
+            gap: 12px;
+        }
+
+        /* Direction 2: Maximum Density */
+        .dir2 .selectors {
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .dir2 .table-header,
+        .dir2 .table-row {
+            grid-template-columns: 2fr 1.2fr 1.2fr 0.9fr 0.9fr 0.9fr 0.7fr 0.9fr;
+            gap: 6px;
+            padding: 6px 8px;
+            font-size: 11px;
+        }
+
+        /* Direction 3: Spacious & Comfortable */
+        .dir3 .selectors {
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .dir3 .selector {
+            padding: 14px 18px;
+            font-size: 14px;
+        }
+
+        .dir3 .table-header,
+        .dir3 .table-row {
+            grid-template-columns: 2fr 1.2fr 1.2fr 1fr 1fr 1fr 0.8fr 1fr;
+            gap: 16px;
+            padding: 12px 16px;
+            font-size: 13px;
+        }
+
+        /* Direction 4: Accent Heavy */
+        .dir4 .selector {
+            border-color: #33B5E5;
+        }
+
+        .dir4 .table-header {
+            background: linear-gradient(135deg, #151921 0%, #1E252E 100%);
+            color: #33B5E5;
+        }
+
+        .dir4 .table-header,
+        .dir4 .table-row {
+            grid-template-columns: 2fr 1.2fr 1.2fr 1fr 1fr 1fr 0.8fr 1fr;
+            gap: 12px;
+        }
+
+        /* Direction 5: Minimal Borders */
+        .dir5 .table-mock {
+            border: none;
+        }
+
+        .dir5 .table-row {
+            border-bottom: none;
+        }
+
+        .dir5 .table-header {
+            border-bottom: 1px solid #33B5E5;
+        }
+
+        .dir5 .table-header,
+        .dir5 .table-row {
+            grid-template-columns: 2fr 1.2fr 1.2fr 1fr 1fr 1fr 0.8fr 1fr;
+            gap: 12px;
+        }
+
+        /* Direction 6: Split Panel */
+        .dir6 .mockup-container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 16px;
+        }
+
+        .dir6 .selectors {
+            background: #151921;
+            padding: 16px;
+            border-radius: 4px;
+            border: 1px solid #2A3441;
+            margin-bottom: 0;
+        }
+
+        .dir6 .table-header,
+        .dir6 .table-row {
+            grid-template-columns: 2fr 1.2fr 1.2fr 1fr 1fr 1fr 0.8fr 1fr;
+            gap: 12px;
+        }
+
+        /* Direction 7: Horizontal Emphasis */
+        .dir7 .selectors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .dir7 .selector {
+            text-align: center;
+            padding: 12px;
+        }
+
+        .dir7 .table-header,
+        .dir7 .table-row {
+            grid-template-columns: 2fr 1.2fr 1.2fr 1fr 1fr 1fr 0.8fr 1fr;
+            gap: 16px;
+        }
+
+        /* Direction 8: Compact ROI Focus */
+        .dir8 .table-header,
+        .dir8 .table-row {
+            grid-template-columns: 2fr 1fr 1fr 0.9fr 0.9fr 0.9fr 0.7fr 0.9fr;
+            gap: 8px;
+        }
+
+        .dir8 .roi-col {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Direction 9: Accent Heavy + Split Panel */
+        .dir9 .mockup-container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 16px;
+        }
+
+        .dir9 .selectors {
+            background: #151921;
+            padding: 16px;
+            border-radius: 4px;
+            border: 1px solid #2A3441;
+            margin-bottom: 0;
+        }
+
+        .dir9 .selector {
+            border-color: #33B5E5;
+        }
+
+        .dir9 .table-header {
+            background: linear-gradient(135deg, #151921 0%, #1E252E 100%);
+            color: #33B5E5;
+        }
+
+        .dir9 .table-header,
+        .dir9 .table-row {
+            grid-template-columns: 2fr 1.2fr 1.2fr 1fr 1fr 1fr 0.8fr 1fr;
+            gap: 12px;
+        }
+
+        .fullscreen-view {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #0A0E12;
+            z-index: 1000;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .fullscreen-view.active {
+            display: block;
+        }
+
+        .close-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #FF4757;
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1001;
+        }
+
+        .close-btn:hover {
+            background: #ff6b7a;
+        }
+
+        .expand-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #1E252E;
+            border: 1px solid #33B5E5;
+            color: #33B5E5;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .expand-btn:hover {
+            background: #33B5E5;
+            color: #0A0E12;
+        }
+
+        .direction-card {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>EVE Market Web App - Design Directions</h1>
+        <p>Explore 8 different visual approaches for your trading scanner. Each direction applies the EVE Online aesthetic with different layout densities, spacing approaches, and visual hierarchies. Click "Expand" on any design to see it fullscreen.</p>
+    </div>
+
+    <div class="controls">
+        <button onclick="showAll()" class="active">Show All</button>
+        <button onclick="filterDensity('compact')">Compact Views</button>
+        <button onclick="filterDensity('comfortable')">Comfortable Views</button>
+        <button onclick="filterDensity('minimal')">Minimal Style</button>
+    </div>
+
+    <div class="grid">
+        <!-- Direction 1: Classic Bloomberg Terminal -->
+        <div class="direction-card" data-category="comfortable">
+            <div class="direction-header">
+                <h2>Direction 1: Classic Bloomberg Terminal</h2>
+                <p><strong>Style:</strong> Professional, data-dense, balanced spacing<br>
+                <strong>Best for:</strong> Users familiar with financial terminals, traditional power users</p>
+            </div>
+            <div class="direction-preview">
+                <button class="expand-btn" onclick="expandView(1)">Expand ⛶</button>
+                <div class="mockup-container dir1">
+                    <div class="selectors">
+                        <div class="selector">Buy Market: The Forge</div>
+                        <div class="selector">Sell Market: Heimatar</div>
+                    </div>
+                    <div class="table-mock">
+                        <div class="table-header">
+                            <div>Item Name</div>
+                            <div>Buy Station</div>
+                            <div>Sell Station</div>
+                            <div>Buy Price</div>
+                            <div>Sell Price</div>
+                            <div>Profit/Unit</div>
+                            <div>ROI %</div>
+                            <div>Quantity</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Compressed Veldspar</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,234.50</div>
+                            <div class="mono">1,765.00</div>
+                            <div class="mono">530.50</div>
+                            <div class="mono roi-high">43.0%</div>
+                            <div class="mono">1,200,000</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Tritanium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">5.75</div>
+                            <div class="mono">7.95</div>
+                            <div class="mono">2.20</div>
+                            <div class="mono roi-high">38.3%</div>
+                            <div class="mono">8,500,000</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Isogen</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">95.20</div>
+                            <div class="mono">128.40</div>
+                            <div class="mono">33.20</div>
+                            <div class="mono roi-high">34.9%</div>
+                            <div class="mono">450,000</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Nocxium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,450.00</div>
+                            <div class="mono">1,890.00</div>
+                            <div class="mono">440.00</div>
+                            <div class="mono roi-medium">30.3%</div>
+                            <div class="mono">125,000</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Megacyte</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">2,100.00</div>
+                            <div class="mono">2,680.00</div>
+                            <div class="mono">580.00</div>
+                            <div class="mono roi-medium">27.6%</div>
+                            <div class="mono">85,000</div>
+                        </div>
+                    </div>
+                    <div class="timestamp">✓ Last updated: 9:02 AM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 2: Maximum Density -->
+        <div class="direction-card" data-category="compact">
+            <div class="direction-header">
+                <h2>Direction 2: Maximum Density</h2>
+                <p><strong>Style:</strong> Ultra-compact, maximum information per screen<br>
+                <strong>Best for:</strong> Large monitors, traders who want to see everything at once</p>
+            </div>
+            <div class="direction-preview">
+                <button class="expand-btn" onclick="expandView(2)">Expand ⛶</button>
+                <div class="mockup-container dir2">
+                    <div class="selectors">
+                        <div class="selector">Buy: The Forge</div>
+                        <div class="selector">Sell: Heimatar</div>
+                    </div>
+                    <div class="table-mock">
+                        <div class="table-header">
+                            <div>Item</div>
+                            <div>Buy Station</div>
+                            <div>Sell Station</div>
+                            <div>Buy</div>
+                            <div>Sell</div>
+                            <div>Profit</div>
+                            <div>ROI</div>
+                            <div>Qty</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Compressed Veldspar</div>
+                            <div>Jita IV</div>
+                            <div>Rens VI</div>
+                            <div class="mono">1,234</div>
+                            <div class="mono">1,765</div>
+                            <div class="mono">530</div>
+                            <div class="mono roi-high">43%</div>
+                            <div class="mono">1.2M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Tritanium</div>
+                            <div>Jita IV</div>
+                            <div>Rens VI</div>
+                            <div class="mono">5.75</div>
+                            <div class="mono">7.95</div>
+                            <div class="mono">2.20</div>
+                            <div class="mono roi-high">38%</div>
+                            <div class="mono">8.5M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Isogen</div>
+                            <div>Jita IV</div>
+                            <div>Rens VI</div>
+                            <div class="mono">95.2</div>
+                            <div class="mono">128</div>
+                            <div class="mono">33.2</div>
+                            <div class="mono roi-high">35%</div>
+                            <div class="mono">450K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Nocxium</div>
+                            <div>Jita IV</div>
+                            <div>Rens VI</div>
+                            <div class="mono">1,450</div>
+                            <div class="mono">1,890</div>
+                            <div class="mono">440</div>
+                            <div class="mono roi-medium">30%</div>
+                            <div class="mono">125K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Megacyte</div>
+                            <div>Jita IV</div>
+                            <div>Rens VI</div>
+                            <div class="mono">2,100</div>
+                            <div class="mono">2,680</div>
+                            <div class="mono">580</div>
+                            <div class="mono roi-medium">28%</div>
+                            <div class="mono">85K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Zydrine</div>
+                            <div>Jita IV</div>
+                            <div>Rens VI</div>
+                            <div class="mono">1,280</div>
+                            <div class="mono">1,610</div>
+                            <div class="mono">330</div>
+                            <div class="mono roi-medium">26%</div>
+                            <div class="mono">95K</div>
+                        </div>
+                    </div>
+                    <div class="timestamp">✓ Last updated: 9:02 AM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 3: Spacious & Comfortable -->
+        <div class="direction-card" data-category="comfortable">
+            <div class="direction-header">
+                <h2>Direction 3: Spacious & Comfortable</h2>
+                <p><strong>Style:</strong> Generous spacing, easy scanning, relaxed density<br>
+                <strong>Best for:</strong> Extended trading sessions, reduced eye strain</p>
+            </div>
+            <div class="direction-preview">
+                <button class="expand-btn" onclick="expandView(3)">Expand ⛶</button>
+                <div class="mockup-container dir3">
+                    <div class="selectors">
+                        <div class="selector">Buy Market: The Forge</div>
+                        <div class="selector">Sell Market: Heimatar</div>
+                    </div>
+                    <div class="table-mock">
+                        <div class="table-header">
+                            <div>Item Name</div>
+                            <div>Buy Station</div>
+                            <div>Sell Station</div>
+                            <div>Buy Price</div>
+                            <div>Sell Price</div>
+                            <div>Profit/Unit</div>
+                            <div>ROI %</div>
+                            <div>Quantity</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Compressed Veldspar</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,234.50 ISK</div>
+                            <div class="mono">1,765.00 ISK</div>
+                            <div class="mono">530.50 ISK</div>
+                            <div class="mono roi-high">43.0%</div>
+                            <div class="mono">1.2M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Tritanium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">5.75 ISK</div>
+                            <div class="mono">7.95 ISK</div>
+                            <div class="mono">2.20 ISK</div>
+                            <div class="mono roi-high">38.3%</div>
+                            <div class="mono">8.5M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Isogen</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">95.20 ISK</div>
+                            <div class="mono">128.40 ISK</div>
+                            <div class="mono">33.20 ISK</div>
+                            <div class="mono roi-high">34.9%</div>
+                            <div class="mono">450K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Nocxium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,450.00 ISK</div>
+                            <div class="mono">1,890.00 ISK</div>
+                            <div class="mono">440.00 ISK</div>
+                            <div class="mono roi-medium">30.3%</div>
+                            <div class="mono">125K</div>
+                        </div>
+                    </div>
+                    <div class="timestamp">✓ Last updated: 9:02 AM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 4: Accent Heavy (EVE Blue Emphasis) -->
+        <div class="direction-card" data-category="comfortable">
+            <div class="direction-header">
+                <h2>Direction 4: Accent Heavy</h2>
+                <p><strong>Style:</strong> Bold EVE blue accents, visual hierarchy through color<br>
+                <strong>Best for:</strong> Strong brand presence, modern aesthetic</p>
+            </div>
+            <div class="direction-preview">
+                <button class="expand-btn" onclick="expandView(4)">Expand ⛶</button>
+                <div class="mockup-container dir4">
+                    <div class="selectors">
+                        <div class="selector">Buy Market: The Forge</div>
+                        <div class="selector">Sell Market: Heimatar</div>
+                    </div>
+                    <div class="table-mock">
+                        <div class="table-header">
+                            <div>Item Name</div>
+                            <div>Buy Station</div>
+                            <div>Sell Station</div>
+                            <div>Buy Price</div>
+                            <div>Sell Price</div>
+                            <div>Profit/Unit</div>
+                            <div>ROI %</div>
+                            <div>Quantity</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Compressed Veldspar</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,234.50</div>
+                            <div class="mono">1,765.00</div>
+                            <div class="mono">530.50</div>
+                            <div class="mono roi-high">43.0%</div>
+                            <div class="mono">1.2M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Tritanium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">5.75</div>
+                            <div class="mono">7.95</div>
+                            <div class="mono">2.20</div>
+                            <div class="mono roi-high">38.3%</div>
+                            <div class="mono">8.5M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Isogen</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">95.20</div>
+                            <div class="mono">128.40</div>
+                            <div class="mono">33.20</div>
+                            <div class="mono roi-high">34.9%</div>
+                            <div class="mono">450K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Nocxium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,450.00</div>
+                            <div class="mono">1,890.00</div>
+                            <div class="mono">440.00</div>
+                            <div class="mono roi-medium">30.3%</div>
+                            <div class="mono">125K</div>
+                        </div>
+                    </div>
+                    <div class="timestamp">✓ Last updated: 9:02 AM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 5: Minimal Borders -->
+        <div class="direction-card" data-category="minimal">
+            <div class="direction-header">
+                <h2>Direction 5: Minimal Borders</h2>
+                <p><strong>Style:</strong> Clean, borderless, separation through background only<br>
+                <strong>Best for:</strong> Maximum minimalism, modern flat aesthetic</p>
+            </div>
+            <div class="direction-preview">
+                <button class="expand-btn" onclick="expandView(5)">Expand ⛶</button>
+                <div class="mockup-container dir5">
+                    <div class="selectors">
+                        <div class="selector">Buy Market: The Forge</div>
+                        <div class="selector">Sell Market: Heimatar</div>
+                    </div>
+                    <div class="table-mock">
+                        <div class="table-header">
+                            <div>Item Name</div>
+                            <div>Buy Station</div>
+                            <div>Sell Station</div>
+                            <div>Buy Price</div>
+                            <div>Sell Price</div>
+                            <div>Profit/Unit</div>
+                            <div>ROI %</div>
+                            <div>Quantity</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Compressed Veldspar</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,234.50</div>
+                            <div class="mono">1,765.00</div>
+                            <div class="mono">530.50</div>
+                            <div class="mono roi-high">43.0%</div>
+                            <div class="mono">1.2M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Tritanium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">5.75</div>
+                            <div class="mono">7.95</div>
+                            <div class="mono">2.20</div>
+                            <div class="mono roi-high">38.3%</div>
+                            <div class="mono">8.5M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Isogen</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">95.20</div>
+                            <div class="mono">128.40</div>
+                            <div class="mono">33.20</div>
+                            <div class="mono roi-high">34.9%</div>
+                            <div class="mono">450K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Nocxium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,450.00</div>
+                            <div class="mono">1,890.00</div>
+                            <div class="mono">440.00</div>
+                            <div class="mono roi-medium">30.3%</div>
+                            <div class="mono">125K</div>
+                        </div>
+                    </div>
+                    <div class="timestamp">✓ Last updated: 9:02 AM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 6: Split Panel -->
+        <div class="direction-card" data-category="comfortable">
+            <div class="direction-header">
+                <h2>Direction 6: Split Panel</h2>
+                <p><strong>Style:</strong> Controls separated from data, contained panels<br>
+                <strong>Best for:</strong> Clear section separation, organized hierarchy</p>
+            </div>
+            <div class="direction-preview">
+                <button class="expand-btn" onclick="expandView(6)">Expand ⛶</button>
+                <div class="mockup-container dir6">
+                    <div class="selectors">
+                        <div class="selector">Buy Market: The Forge</div>
+                        <div class="selector">Sell Market: Heimatar</div>
+                    </div>
+                    <div class="table-mock">
+                        <div class="table-header">
+                            <div>Item Name</div>
+                            <div>Buy Station</div>
+                            <div>Sell Station</div>
+                            <div>Buy Price</div>
+                            <div>Sell Price</div>
+                            <div>Profit/Unit</div>
+                            <div>ROI %</div>
+                            <div>Quantity</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Compressed Veldspar</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,234.50</div>
+                            <div class="mono">1,765.00</div>
+                            <div class="mono">530.50</div>
+                            <div class="mono roi-high">43.0%</div>
+                            <div class="mono">1.2M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Tritanium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">5.75</div>
+                            <div class="mono">7.95</div>
+                            <div class="mono">2.20</div>
+                            <div class="mono roi-high">38.3%</div>
+                            <div class="mono">8.5M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Isogen</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">95.20</div>
+                            <div class="mono">128.40</div>
+                            <div class="mono">33.20</div>
+                            <div class="mono roi-high">34.9%</div>
+                            <div class="mono">450K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Nocxium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,450.00</div>
+                            <div class="mono">1,890.00</div>
+                            <div class="mono">440.00</div>
+                            <div class="mono roi-medium">30.3%</div>
+                            <div class="mono">125K</div>
+                        </div>
+                    </div>
+                    <div class="timestamp">✓ Last updated: 9:02 AM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 7: Horizontal Emphasis -->
+        <div class="direction-card" data-category="comfortable">
+            <div class="direction-header">
+                <h2>Direction 7: Horizontal Emphasis</h2>
+                <p><strong>Style:</strong> Wide layout, horizontal scanning optimized<br>
+                <strong>Best for:</strong> Ultrawide monitors, horizontal eye movement</p>
+            </div>
+            <div class="direction-preview">
+                <button class="expand-btn" onclick="expandView(7)">Expand ⛶</button>
+                <div class="mockup-container dir7">
+                    <div class="selectors">
+                        <div class="selector">BUY: The Forge</div>
+                        <div class="selector">SELL: Heimatar</div>
+                    </div>
+                    <div class="table-mock">
+                        <div class="table-header">
+                            <div>Item Name</div>
+                            <div>Buy Station</div>
+                            <div>Sell Station</div>
+                            <div>Buy Price</div>
+                            <div>Sell Price</div>
+                            <div>Profit/Unit</div>
+                            <div>ROI %</div>
+                            <div>Quantity</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Compressed Veldspar</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,234.50</div>
+                            <div class="mono">1,765.00</div>
+                            <div class="mono">530.50</div>
+                            <div class="mono roi-high">43.0%</div>
+                            <div class="mono">1.2M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Tritanium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">5.75</div>
+                            <div class="mono">7.95</div>
+                            <div class="mono">2.20</div>
+                            <div class="mono roi-high">38.3%</div>
+                            <div class="mono">8.5M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Isogen</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">95.20</div>
+                            <div class="mono">128.40</div>
+                            <div class="mono">33.20</div>
+                            <div class="mono roi-high">34.9%</div>
+                            <div class="mono">450K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Nocxium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,450.00</div>
+                            <div class="mono">1,890.00</div>
+                            <div class="mono">440.00</div>
+                            <div class="mono roi-medium">30.3%</div>
+                            <div class="mono">125K</div>
+                        </div>
+                    </div>
+                    <div class="timestamp">✓ Last updated: 9:02 AM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 8: Compact ROI Focus -->
+        <div class="direction-card" data-category="compact">
+            <div class="direction-header">
+                <h2>Direction 8: Compact ROI Focus</h2>
+                <p><strong>Style:</strong> ROI column emphasized, minimized other data<br>
+                <strong>Best for:</strong> Quick scanning, ROI is the primary decision factor</p>
+            </div>
+            <div class="direction-preview">
+                <button class="expand-btn" onclick="expandView(8)">Expand ⛶</button>
+                <div class="mockup-container dir8">
+                    <div class="selectors">
+                        <div class="selector">The Forge → Heimatar</div>
+                    </div>
+                    <div class="table-mock">
+                        <div class="table-header">
+                            <div>Item Name</div>
+                            <div>Buy Station</div>
+                            <div>Sell Station</div>
+                            <div>Buy</div>
+                            <div>Sell</div>
+                            <div>Profit</div>
+                            <div class="roi-col">ROI %</div>
+                            <div>Qty</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Compressed Veldspar</div>
+                            <div>Jita 4-4</div>
+                            <div>Rens 6-8</div>
+                            <div class="mono">1.2K</div>
+                            <div class="mono">1.8K</div>
+                            <div class="mono">530</div>
+                            <div class="mono roi-high roi-col">43.0%</div>
+                            <div class="mono">1.2M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Tritanium</div>
+                            <div>Jita 4-4</div>
+                            <div>Rens 6-8</div>
+                            <div class="mono">5.8</div>
+                            <div class="mono">8.0</div>
+                            <div class="mono">2.2</div>
+                            <div class="mono roi-high roi-col">38.3%</div>
+                            <div class="mono">8.5M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Isogen</div>
+                            <div>Jita 4-4</div>
+                            <div>Rens 6-8</div>
+                            <div class="mono">95</div>
+                            <div class="mono">128</div>
+                            <div class="mono">33</div>
+                            <div class="mono roi-high roi-col">34.9%</div>
+                            <div class="mono">450K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Nocxium</div>
+                            <div>Jita 4-4</div>
+                            <div>Rens 6-8</div>
+                            <div class="mono">1.5K</div>
+                            <div class="mono">1.9K</div>
+                            <div class="mono">440</div>
+                            <div class="mono roi-medium roi-col">30.3%</div>
+                            <div class="mono">125K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Megacyte</div>
+                            <div>Jita 4-4</div>
+                            <div>Rens 6-8</div>
+                            <div class="mono">2.1K</div>
+                            <div class="mono">2.7K</div>
+                            <div class="mono">580</div>
+                            <div class="mono roi-medium roi-col">27.6%</div>
+                            <div class="mono">85K</div>
+                        </div>
+                    </div>
+                    <div class="timestamp">✓ Last updated: 9:02 AM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direction 9: Accent Heavy + Split Panel -->
+        <div class="direction-card" data-category="comfortable">
+            <div class="direction-header">
+                <h2>Direction 9: Accent Heavy + Split Panel</h2>
+                <p><strong>Style:</strong> Bold EVE blue accents with separated control panel<br>
+                <strong>Best for:</strong> Clear visual hierarchy, strong brand presence with organized controls</p>
+            </div>
+            <div class="direction-preview">
+                <button class="expand-btn" onclick="expandView(9)">Expand ⛶</button>
+                <div class="mockup-container dir9">
+                    <div class="selectors">
+                        <div class="selector">Buy Market: The Forge</div>
+                        <div class="selector">Sell Market: Heimatar</div>
+                    </div>
+                    <div class="table-mock">
+                        <div class="table-header">
+                            <div>Item Name</div>
+                            <div>Buy Station</div>
+                            <div>Sell Station</div>
+                            <div>Buy Price</div>
+                            <div>Sell Price</div>
+                            <div>Profit/Unit</div>
+                            <div>ROI %</div>
+                            <div>Quantity</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Compressed Veldspar</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,234.50</div>
+                            <div class="mono">1,765.00</div>
+                            <div class="mono">530.50</div>
+                            <div class="mono roi-high">43.0%</div>
+                            <div class="mono">1.2M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Tritanium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">5.75</div>
+                            <div class="mono">7.95</div>
+                            <div class="mono">2.20</div>
+                            <div class="mono roi-high">38.3%</div>
+                            <div class="mono">8.5M</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Isogen</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">95.20</div>
+                            <div class="mono">128.40</div>
+                            <div class="mono">33.20</div>
+                            <div class="mono roi-high">34.9%</div>
+                            <div class="mono">450K</div>
+                        </div>
+                        <div class="table-row">
+                            <div>Nocxium</div>
+                            <div>Jita IV-4</div>
+                            <div>Rens VI-8</div>
+                            <div class="mono">1,450.00</div>
+                            <div class="mono">1,890.00</div>
+                            <div class="mono">440.00</div>
+                            <div class="mono roi-medium">30.3%</div>
+                            <div class="mono">125K</div>
+                        </div>
+                    </div>
+                    <div class="timestamp">✓ Last updated: 9:02 AM</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fullscreen-view" id="fullscreen">
+        <button class="close-btn" onclick="closeFullscreen()">✕ Close</button>
+        <div id="fullscreen-content"></div>
+    </div>
+
+    <script>
+        function showAll() {
+            document.querySelectorAll('.direction-card').forEach(card => {
+                card.style.display = 'block';
+            });
+            setActiveButton(0);
+        }
+
+        function filterDensity(category) {
+            document.querySelectorAll('.direction-card').forEach(card => {
+                if (card.dataset.category === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            const index = category === 'compact' ? 1 : category === 'comfortable' ? 2 : 3;
+            setActiveButton(index);
+        }
+
+        function setActiveButton(index) {
+            const buttons = document.querySelectorAll('.controls button');
+            buttons.forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function expandView(directionNum) {
+            const card = document.querySelectorAll('.direction-card')[directionNum - 1];
+            const preview = card.querySelector('.direction-preview').cloneNode(true);
+            preview.querySelector('.expand-btn').remove();
+            
+            const fullscreen = document.getElementById('fullscreen');
+            const content = document.getElementById('fullscreen-content');
+            content.innerHTML = '';
+            
+            const header = card.querySelector('.direction-header').cloneNode(true);
+            content.appendChild(header);
+            content.appendChild(preview);
+            
+            fullscreen.classList.add('active');
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreen').classList.remove('active');
+        }
+
+        // Close fullscreen on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>

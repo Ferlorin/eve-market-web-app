@@ -9,3 +9,8 @@ user_name: Harry
 communication_language: English
 document_output_language: English
 output_folder: "{project-root}/_bmad-output"
+
+# Project Context Notes
+# docs/ folder contains previous desktop PoC work (eve-market-scanner-architecture.md, eve-market-poc-requirements.md)
+# For current web app development, use PRD located in _bmad-output/planning-artifacts/prd.md as primary source
+# Do not prompt to include docs/ files in workflows unless specifically requested
