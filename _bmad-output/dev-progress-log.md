@@ -417,3 +417,101 @@ await prisma.$transaction(async (tx) => {
 
 ## Blockers/Issues
 _None_
+
+---
+
+## Session: 2026-02-14 (Evening) - Bug Fixes & Station Names
+
+### Bugs Fixed 🐛
+
+#### Bug #001: Dev Server Won't Start
+- **Severity:** 🔴 Critical
+- **Cause:** Zombie process + stale lock file
+- **Resolution:** Killed PID 40176, removed `.next/dev/lock`
+- **Status:** ✅ Fixed
+- See: [Bug Report #001](bug-reports-and-fixes.md#bug-report-001---dev-server-wont-start-2026-02-14)
+
+#### Bug #002: Theme Toggle Not Working 
+- **Severity:** 🟡 High
+- **Cause:** Invalid Tailwind variants, hardcoded colors, class toggle issues
+- **Resolution:** 
+  - Created theme-responsive CSS utilities (`.theme-bg-primary`, etc.)
+  - Fixed class application in theme-context.tsx
+  - Updated 7 components to use CSS variables
+- **Files Changed:**
+  - `webapp/src/lib/theme-context.tsx`
+  - `webapp/src/components/ThemeToggle.tsx`
+  - `webapp/src/app/globals.css`
+  - `webapp/src/app/layout.tsx`
+  - `webapp/src/app/page.tsx`
+  - `webapp/src/components/DataFreshness.tsx`
+  - `webapp/src/components/RegionSelector.tsx`
+- **Status:** ✅ Fixed - Theme switching fully functional
+- See: [Bug Report #002](bug-reports-and-fixes.md#bug-report-002---theme-toggle-not-working-2026-02-14)
+
+#### Bug #003: Colors Don't Match Direction 9 Palette
+- **Severity:** 🟡 Medium
+- **Cause:** Using generic gray instead of semantic green for fresh data
+- **Resolution:**
+  - Added Direction 9 colors to CSS: `--color-success: #10b981`
+  - Updated DataFreshness component to use green for current timestamps
+- **Files Changed:**
+  - `webapp/src/app/globals.css`
+  - `webapp/src/components/DataFreshness.tsx`
+- **Status:** ✅ Fixed - Matches UX spec
+- See: [Bug Report #003](bug-reports-and-fixes.md#bug-report-003---colors-dont-match-direction-9-palette-2026-02-14)
+
+#### Bug #004: Opportunities Table Empty Despite API Data
+- **Severity:** 🔴 Critical
+- **Cause:** API response parsing mismatch - expected array, got wrapper object
+- **Resolution:** Updated `fetchOpportunities()` to extract `json.data` array
+- **Files Changed:**
+  - `webapp/src/lib/queries/opportunities.ts`
+- **Status:** ✅ Fixed - Table displays opportunities correctly
+- See: [Bug Report #004](bug-reports-and-fixes.md#bug-report-004---opportunities-table-empty-despite-api-data-2026-02-14)
+
+### Enhancements Delivered ✨
+
+#### Enhancement #001: Station Name Lookup with Caching
+- **Feature:** Replace station IDs with human-readable names
+- **Implementation:**
+  1. ✅ Added `Location` model to Prisma schema
+  2. ✅ Created migration `20260214212611_add_location_cache`
+  3. ✅ Added ESI methods: `getStationName()`, `getStructureName()`
+  4. ✅ Built `location-service.ts` with batch caching
+  5. ✅ Integrated into opportunities API
+- **Performance:**
+  - First load: ~500ms (fetch from ESI + cache)
+  - Subsequent: ~50ms (cache hit)
+  - Batch optimization: 100 opportunities = 1 DB query + parallel ESI requests
+- **Error Handling:**
+  - Private structures (401/403): Graceful fallback to ID
+  - Missing stations (404): Fallback to ID
+  - ESI downtime: Fallback to ID
+- **Files Changed:**
+  - `webapp/prisma/schema.prisma` - Added Location model
+  - `webapp/src/lib/esi-client.ts` - Added name fetch methods
+  - `webapp/src/lib/location-service.ts` - **New file** - Caching service
+  - `webapp/src/app/api/opportunities/route.ts` - Integrated resolution
+- **Status:** ✅ Deployed - Station names display correctly
+- See: [Enhancement #001](bug-reports-and-fixes.md#enhancement-001---station-name-lookup-implementation-2026-02-14)
+
+### Documentation Updates 📚
+- ✅ Created comprehensive bug report document: `_bmad-output/bug-reports-and-fixes.md`
+- ✅ Documented all 4 bugs with root causes and resolutions
+- ✅ Documented station name enhancement with implementation details
+- ✅ Added lessons learned and best practices
+- ✅ Included troubleshooting guide for common dev issues
+
+### Session Statistics
+- **Bugs Fixed:** 4 (2 critical, 1 high, 1 medium)
+- **Enhancements:** 1 major feature
+- **Files Modified:** 11
+- **New Files Created:** 2 (`location-service.ts`, `bug-reports-and-fixes.md`)
+- **Database Migrations:** 1
+- **Lines of Code:** ~800 (including documentation)
+
+---
+
+## Blockers/Issues
+_None_

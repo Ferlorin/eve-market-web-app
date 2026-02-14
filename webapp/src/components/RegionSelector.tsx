@@ -63,7 +63,7 @@ export function RegionSelector({
         {({ open }) => (
           <div className="relative">
             {/* Label */}
-            <Combobox.Label className="block text-sm font-medium text-gray-300 mb-2">
+            <Combobox.Label className="block text-sm font-medium theme-text-secondary mb-2">
               {label}
             </Combobox.Label>
 
@@ -71,7 +71,7 @@ export function RegionSelector({
             <div className="relative">
               <Combobox.Input
                 ref={inputRef}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 py-2 pl-3 pr-10 text-white placeholder:text-gray-500 
+                className="w-full rounded-lg border theme-border theme-bg-secondary py-2 pl-3 pr-10 theme-text-primary placeholder:text-gray-500 
                   focus:border-eve-blue focus:outline-none focus:ring-2 focus:ring-eve-blue focus:ring-offset-2 focus:ring-offset-gray-900 
                   focus-visible:ring-2 focus-visible:ring-eve-blue focus-visible:ring-offset-2
                   disabled:cursor-not-allowed disabled:opacity-50
@@ -107,7 +107,7 @@ export function RegionSelector({
             {/* Dropdown Options */}
             {filteredRegions.length > 0 && (
               <Combobox.Options 
-                className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-700 bg-gray-800 py-1 text-base shadow-lg 
+                className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border theme-border theme-bg-secondary py-1 text-base shadow-lg 
                   focus:outline-none sm:text-sm
                   scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
               >
@@ -117,7 +117,7 @@ export function RegionSelector({
                     value={region}
                     className={({ active }) =>
                       `relative cursor-pointer select-none py-2 pl-3 pr-9 transition-colors ${
-                        active ? 'bg-eve-blue/20 text-white' : 'text-gray-300'
+                        active ? 'bg-eve-blue/20 theme-text-primary' : 'theme-text-secondary'
                       }`
                     }
                   >
@@ -134,7 +134,7 @@ export function RegionSelector({
                         {selected && (
                           <span
                             className={`absolute inset-y-0 right-0 flex items-center pr-4 ${
-                              active ? 'text-white' : 'text-eve-blue'
+                              active ? 'theme-text-primary' : 'text-eve-blue'
                             }`}
                           >
                             <CheckIcon className="h-5 w-5" aria-hidden="true" />
@@ -149,7 +149,7 @@ export function RegionSelector({
 
             {/* No Results Message */}
             {query !== '' && filteredRegions.length === 0 && (
-              <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-700 bg-gray-800 py-2 px-3 text-sm text-gray-400">
+              <div className="absolute z-10 mt-1 w-full rounded-lg border theme-border theme-bg-secondary py-2 px-3 text-sm theme-text-secondary">
                 No regions found matching "{query}"
               </div>
             )}

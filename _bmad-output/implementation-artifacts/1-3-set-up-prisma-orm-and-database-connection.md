@@ -33,7 +33,7 @@ So that I can define database schemas and generate type-safe database clients.
 - [x] Run `npx prisma format` to format schema
 
 ### Task 3: Create PrismaClient Singleton
-- [x] Create frontend/src/lib/ directory
+- [x] Create webapp/src/lib/ directory
 - [x] Create db.ts with PrismaClient singleton pattern
 - [x] Add development logging configuration
 - [x] Export prisma instance for use in application
@@ -451,18 +451,18 @@ All acceptance criteria met. Prisma configured and ready for Story 2.1 (database
 ### File List
 
 **Created:**
-- frontend/prisma/schema.prisma (PostgreSQL datasource, no models yet)
-- frontend/prisma.config.ts (datasource URL configuration)  
-- frontend/.env (DATABASE_URL for local Docker PostgreSQL)
-- frontend/src/lib/db.ts (PrismaClient singleton with pg adapter)
-- frontend/src/lib/test-db.ts (database connection test script)
+- webapp/prisma/schema.prisma (PostgreSQL datasource, no models yet)
+- webapp/prisma.config.ts (datasource URL configuration)  
+- webapp/.env (DATABASE_URL for local Docker PostgreSQL)
+- webapp/src/lib/db.ts (PrismaClient singleton with pg adapter)
+- webapp/src/lib/test-db.ts (database connection test script)
 
 **Modified:**
-- frontend/.gitignore (added prisma/migrations/)
-- frontend/package.json (added prisma, @prisma/client, @prisma/adapter-pg, pg, dotenv, tsx dependencies)
+- webapp/.gitignore (added prisma/migrations/)
+- webapp/package.json (added prisma, @prisma/client, @prisma/adapter-pg, pg, dotenv, tsx dependencies)
 - _bmad-output/dev-progress-log.md (progress tracking)
 - _bmad-output/implementation-artifacts/sprint-status.yaml (story 1-3: in-progress)
 - _bmad-output/implementation-artifacts/1-3-set-up-prisma-orm-and-database-connection.md (added Tasks/Subtasks, marked complete)
 
 **Generated:**
-- frontend/node_modules/@prisma/client/ (generated Prisma Client)
+- webapp/node_modules/@prisma/client/ (generated Prisma Client)

@@ -22,6 +22,10 @@
   --color-eve-gold: #FFB800;
   --color-eve-red: #FF4757;
   
+  /* Direction 9: Success & Warning Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  
   /* Custom Gray Scale for Dark Theme */
   --color-gray-900: #0A0E14;
   --color-gray-850: #1A2028;
@@ -49,6 +53,27 @@ body {
   background: var(--color-gray-900);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Theme-responsive utility classes */
+.theme-bg-primary {
+  background-color: var(--color-gray-900);
+}
+
+.theme-bg-secondary {
+  background-color: var(--color-gray-800);
+}
+
+.theme-border {
+  border-color: var(--color-gray-700);
+}
+
+.theme-text-primary {
+  color: var(--foreground);
+}
+
+.theme-text-secondary {
+  color: var(--color-gray-400);
 }
 
 /* Custom scrollbar for region dropdown */

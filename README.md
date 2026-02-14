@@ -287,14 +287,16 @@ Market orders older than 7 days are automatically purged to stay within the 0.5G
 
 The table automatically populates with profitable trading opportunities showing:
 
-- **Item Name** - The tradeable item
-- **Buy Station** - Where to buy (station ID)
-- **Sell Station** - Where to sell (station ID)
+- **Item Name** - The tradeable item (type ID currently, names coming soon)
+- **Buy Station** - Where to buy (station name from ESI, or ID if private structure)
+- **Sell Station** - Where to sell (station name from ESI, or ID if private structure)
 - **Buy Price** - Purchase price per unit
 - **Sell Price** - Selling price per unit
 - **ROI %** - Return on investment percentage
 - **Quantity** - Available volume
 - **Volume** - Total m³
+
+**Station Names:** The app automatically caches station names from the ESI API. First load may take a moment as it fetches names, but subsequent loads are instant. Private player structures may show as IDs if access is restricted.
 
 ### 3. Sort Results
 
@@ -377,9 +379,28 @@ curl -X POST http://localhost:3000/api/admin/trigger-fetch \
 **Issue:** "Port 3000 is already in use"
 
 **Solution:**
-```bash
-# Find and kill the process using port 3000
-Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess | Stop-Process -Force
+```powershell
+# Windows PowerShell: Find and kill the process using port 3000
+$port = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue
+if ($port) { Stop-Process -Id $port.OwningProcess -Force }
+```
+
+### Dev Server Lock File Error
+
+**Issue:** "Unable to acquire lock at `.next/dev/lock`"
+
+**Solution:**
+```powershell
+# Kill any orphaned processes first
+$port = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue
+if ($port) { Stop-Process -Id $port.OwningProcess -Force }
+
+# Remove stale lock file
+Remove-Item -Force C:\Users\<your-user>\src\eve-market-web-app\webapp\.next\dev\lock
+
+# Restart dev server
+cd webapp
+npm run dev
 ```
 
 ### Prisma Client Not Found

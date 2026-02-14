@@ -236,7 +236,7 @@ Claude Sonnet 4.5 (via GitHub Copilot)
 
 **Implementation Summary:**
 - ✅ Successfully initialized Next.js 16.1.6 project with all required dependencies
-- ✅ Separated frontend/ and backend/ directories for monorepo structure
+- ✅ Separated webapp/ and backend/ directories for monorepo structure
 - ✅ Configured src/ directory structure (app/ relocated from root)
 - ✅ Build verified successful in ~1s with Turbopack
 - ✅ Dev server starts in 528ms on http://localhost:3000
@@ -255,7 +255,7 @@ Claude Sonnet 4.5 (via GitHub Copilot)
 1. **Manual src/ restructure:** create-next-app created app/ at root; manually moved to src/app/ to match story requirements
 2. **Tailwind CSS 4 config:** No tailwind.config.ts file; Tailwind 4 uses CSS-based configuration via @theme directive in globals.css
 3. **ESLint flat config:** Uses eslint.config.mjs (modern format) instead of .eslintrc.json
-4. **Monorepo structure:** Created frontend/ and backend/ directories for separation of concerns
+4. **Monorepo structure:** Created webapp/ and backend/ directories for separation of concerns
 
 **Performance Verification:**
 - Build time: ~1.06s (well under all performance targets)
@@ -272,27 +272,27 @@ All acceptance criteria met. Project foundation ready for Story 1.2 (Docker + Po
 ### File List
 
 **Created:**
-- frontend/
-- frontend/src/app/page.tsx
-- frontend/src/app/layout.tsx
-- frontend/src/app/globals.css
-- frontend/src/app/favicon.ico
-- frontend/src/components/ (directory)
-- frontend/public/
-- frontend/package.json
-- frontend/tsconfig.json
-- frontend/next.config.ts
-- frontend/eslint.config.mjs
-- frontend/postcss.config.mjs
-- frontend/next-env.d.ts
-- frontend/.gitignore
-- frontend/README.md
+- webapp/
+- webapp/src/app/page.tsx
+- webapp/src/app/layout.tsx
+- webapp/src/app/globals.css
+- webapp/src/app/favicon.ico
+- webapp/src/components/ (directory)
+- webapp/public/
+- webapp/package.json
+- webapp/tsconfig.json
+- webapp/next.config.ts
+- webapp/eslint.config.mjs
+- webapp/postcss.config.mjs
+- webapp/next-env.d.ts
+- webapp/.gitignore
+- webapp/README.md
 - backend/ (directory, empty for now)
 
 **Modified:**
-- frontend/tsconfig.json (updated @/* path alias to ./src/*)
-- frontend/src/app/page.tsx (tested hot reload)
-- frontend/README.md (added project-specific documentation)
+- webapp/tsconfig.json (updated @/* path alias to ./src/*)
+- webapp/src/app/page.tsx (tested hot reload)
+- webapp/README.md (added project-specific documentation)
 - _bmad-output/dev-progress-log.md (tracking document)
 - _bmad-output/implementation-artifacts/sprint-status.yaml (story 1-1: in-progress)
 - _bmad-output/implementation-artifacts/1-1-initialize-nextjs-16-project-with-starter-template.md (added Tasks/Subtasks, marked complete)

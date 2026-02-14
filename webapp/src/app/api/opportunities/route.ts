@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { locationService } from '@/lib/location-service';
 import { z } from 'zod';
 
 // Request validation schema
@@ -139,7 +140,10 @@ async function calculateOpportunities(
   });
 
   // Calculate ROI for matching items
-  const opportunities: Opportunity[] = [];
+  const opportunities: Array<Omit<Opportunity, 'buyStation' | 'sellStation'> & {
+    buyLocationId: bigint;
+    sellLocationId: bigint;
+  }> = [];
 
   buyPriceMap.forEach((buyData, typeId) => {
     const sellData = sellPriceMap.get(typeId);
@@ -157,8 +161,8 @@ async function calculateOpportunities(
         itemName: `Item ${typeId}`, // Placeholder - Item names can be loaded separately
         buyPrice: Math.round(buyPrice * 100) / 100, // Round to 2 decimals
         sellPrice: Math.round(sellPrice * 100) / 100,
-        buyStation: buyData.location.toString(),
-        sellStation: sellData.location.toString(),
+        buyLocationId: buyData.location,
+        sellLocationId: sellData.location,
         roi: Math.round(roi * 100) / 100, // Round to 2 decimals
         volumeAvailable: Math.min(buyData.volume, sellData.volume),
       });
@@ -169,5 +173,30 @@ async function calculateOpportunities(
   opportunities.sort((a, b) => b.roi - a.roi);
 
   // Limit to top 1000 to keep response under 2MB
-  return opportunities.slice(0, 1000);
+  const topOpportunities = opportunities.slice(0, 1000);
+
+  // Batch fetch location names for all unique locations
+  const uniqueLocationIds = new Set<bigint>();
+  topOpportunities.forEach((opp) => {
+    uniqueLocationIds.add(opp.buyLocationId);
+    uniqueLocationIds.add(opp.sellLocationId);
+  });
+
+  const locationNames = await locationService.getLocationNames(
+    Array.from(uniqueLocationIds)
+  );
+
+  // Map location IDs to names
+  const finalOpportunities: Opportunity[] = topOpportunities.map((opp) => ({
+    typeId: opp.typeId,
+    itemName: opp.itemName,
+    buyPrice: opp.buyPrice,
+    sellPrice: opp.sellPrice,
+    buyStation: locationNames.get(opp.buyLocationId) || opp.buyLocationId.toString(),
+    sellStation: locationNames.get(opp.sellLocationId) || opp.sellLocationId.toString(),
+    roi: opp.roi,
+    volumeAvailable: opp.volumeAvailable,
+  }));
+
+  return finalOpportunities;
 }
