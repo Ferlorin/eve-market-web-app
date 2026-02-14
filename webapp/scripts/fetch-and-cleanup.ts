@@ -1,5 +1,6 @@
 import { fetchAllRegions } from '../src/jobs/fetch-market-data';
 import { cleanupOldOrders, getDatabaseStats } from '../src/jobs/cleanup-old-data';
+import { prisma } from '../src/lib/db';
 
 async function main() {
   console.log('Starting market data fetch...\n');
@@ -13,6 +14,7 @@ async function main() {
     console.log('\nFetch completed:', result);
   } catch (error) {
     console.error('\nFetch failed:', error);
+    await prisma.$disconnect();
     process.exit(1);
   }
 
@@ -31,6 +33,8 @@ async function main() {
     }
   }
 
+  // Gracefully disconnect Prisma before exit
+  await prisma.$disconnect();
   process.exit(0);
 }
 
