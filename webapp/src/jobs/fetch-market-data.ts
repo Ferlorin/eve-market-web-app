@@ -4,7 +4,7 @@ import pLimit from 'p-limit';
 import { logger } from '@/lib/logger';
 import { Prisma } from '@prisma/client';
 
-const limit = pLimit(5); // Reduced concurrency to avoid memory issues
+const limit = pLimit(2); // Very low concurrency to avoid memory issues with large datasets
 
 export async function fetchAllRegions() {
   const startTime = Date.now();
