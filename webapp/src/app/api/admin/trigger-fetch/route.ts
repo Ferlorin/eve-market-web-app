@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchAllRegions } from '@/jobs/fetch-market-data';
 import { logger } from '@/lib/logger';
 
-export const maxDuration = 600; // 10 minutes max
+export const maxDuration = 300; // 5 minutes max (Vercel Hobby limit)
 
 export async function POST(request: NextRequest) {
   // Verify admin token

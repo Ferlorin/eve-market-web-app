@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchAllRegions } from '@/jobs/fetch-market-data';
 import { logger } from '@/lib/logger';
 
-export const maxDuration = 600; // 10 minutes max (Vercel limit)
+export const maxDuration = 300; // 5 minutes max (Vercel Hobby limit)
 
 export async function GET(request: NextRequest) {
   // Verify cron secret to prevent unauthorized triggers

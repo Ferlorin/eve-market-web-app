@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma migrate deploy && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
     "fetch-data": "node --max-old-space-size=8192 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/test-fetch.ts",

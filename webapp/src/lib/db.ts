@@ -4,16 +4,15 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-// Create PostgreSQL connection pool with explicit configuration
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
 const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  user: 'postgres',
-  password: 'postgres',
-  database: 'eve_market',
-  max: 20,
+  connectionString: process.env.DATABASE_URL,
+  max: process.env.VERCEL ? 5 : 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
 });
 
 const adapter = new PrismaPg(pool);
