@@ -1,0 +1,15 @@
+// Prisma schema for EVE Market Web App
+// This is the foundation - actual models added in Story 2.1
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Models will be added in Story 2.1:
+// - Region (EVE region data)
+// - MarketOrder (market order data from ESI API)
+

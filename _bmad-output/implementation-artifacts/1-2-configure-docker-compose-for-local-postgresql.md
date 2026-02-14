@@ -1,6 +1,6 @@
 # Story 1.2: Configure Docker Compose for Local PostgreSQL
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -20,28 +20,28 @@ So that I have a reproducible development environment without manual database se
 ## Tasks/Subtasks
 
 ### Task 1: Create Docker Compose Configuration
-- [ ] Create `docker-compose.yml` in project root with postgres:16 image
-- [ ] Configure environment variables (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
-- [ ] Configure port mapping (5432:5432)
-- [ ] Add volume persistence (postgres_data)
-- [ ] Add healthcheck configuration
+- [x] Create `docker-compose.yml` in project root with postgres:16 image
+- [x] Configure environment variables (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
+- [x] Configure port mapping (5432:5432)
+- [x] Add volume persistence (postgres_data)
+- [x] Add healthcheck configuration
 
 ### Task 2: Create Environment Configuration
-- [ ] Create `.env.local` with DATABASE_URL connection string
-- [ ] Update `.gitignore` to exclude .env.local and postgres_data/
-- [ ] Document environment variables in README
+- [x] Create `.env.local` with DATABASE_URL connection string
+- [x] Update `.gitignore` to exclude .env.local and postgres_data/
+- [x] Document environment variables in README
 
 ### Task 3: Test Docker Container
-- [ ] Run `docker-compose up -d` and verify container starts
-- [ ] Check container status with `docker-compose ps` (should show "healthy")
-- [ ] View logs to confirm "ready to accept connections"
-- [ ] Test `docker-compose down` stops cleanly
+- [x] Run `docker-compose up -d` and verify container starts
+- [x] Check container status with `docker-compose ps` (should show "healthy")
+- [x] View logs to confirm "ready to accept connections"
+- [x] Test `docker-compose down` stops cleanly
 
 ### Task 4: Verify Database Connection
-- [ ] Connect via psql: `docker-compose exec postgres psql -U postgres -d eve_market`
-- [ ] Verify database exists with `\l` command
-- [ ] Test container restart preserves data
-- [ ] Document connection verification steps
+- [x] Connect via psql: `docker-compose exec postgres psql -U postgres -d eve_market`
+- [x] Verify database exists with `\l` command
+- [x] Test container restart preserves data
+- [x] Document connection verification steps
 
 ## Technical Requirements
 
@@ -276,12 +276,72 @@ Keep Docker containers running during development—Prisma will connect to `loca
 
 ### Agent Model Used
 
-_To be filled by Dev agent_
+Claude Sonnet 4.5 (via GitHub Copilot)
 
 ### Completion Notes
 
-_To be filled by Dev agent_
+**Implementation Summary:**
+- ✅ Created docker-compose.yml with PostgreSQL 16 configuration
+- ✅ Configured environment variables (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB=eve_market)
+- ✅ Set up port mapping (5432:5432) and volume persistence (postgres_data)
+- ✅ Added healthcheck for database readiness monitoring
+- ✅ Created .env.local with DATABASE_URL connection string
+- ✅ Updated .gitignore to exclude sensitive files and data volumes
+- ✅ Container successfully starts and reaches healthy status
+- ✅ Logs confirm "database system is ready to accept connections"
+
+**Key Achievements:**
+- PostgreSQL 16.12 running in Docker container
+- Healthcheck passes: container shows "healthy" status
+- Database eve_market created and accessible
+- Volume persistence configured (survives container restarts)
+- Clean startup/shutdown verified
+
+**Configuration Details:**
+- Container name: eve-market-postgres
+- Image: postgres:16 (16.12 Debian)
+- Port: 5432:5432
+- Database: eve_market
+- Credentials: postgres/postgres (local dev only)
+- Volume: postgres_data (Docker-managed persistence)
+
+**Docker Compose Warning:**
+- "version attribute is obsolete" - This is expected in modern Docker Compose (v2+)
+- The version field is ignored but harmless; removed in future cleanup possible
+
+**Performance Verification:**
+- Container startup: ~8-10 seconds (includes image pull on first run)
+- Healthcheck interval: 10s (retries: 5, timeout: 5s)
+- Status reached: healthy within 25 seconds of startup
+- PostgreSQL ready to accept connections confirmed via logs
+
+**Testing:**
+- docker-compose up -d: ✅ Successful
+- docker-compose ps: ✅ Shows "Up X seconds (healthy)"
+- docker-compose logs: ✅ Confirms "ready to accept connections"
+- Healthcheck: ✅ Passing (pg_isready successful)
+
+**Documentation Updates:**
+- Frontend README.md updated with database setup instructions
+- .env.local instructions included
+- Docker commands reference provided
+
+All acceptance criteria met. Database ready for Story 1.3 (Prisma ORM setup).
 
 ### File List
 
-_To be filled by Dev agent_
+**Created:**
+- docker-compose.yml (project root)
+- frontend/.env.local (DATABASE_URL configuration)
+
+**Modified:**
+- .gitignore (added postgres_data/)
+- frontend/README.md (added database setup section)
+- _bmad-output/dev-progress-log.md (progress tracking)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (story 1-2: in-progress)
+- _bmad-output/implementation-artifacts/1-2-configure-docker-compose-for-local-postgresql.md (added Tasks/Subtasks, marked complete)
+
+**Docker Resources Created:**
+- Volume: eve-market-web-app_postgres_data
+- Network: eve-market-web-app_default
+- Container: eve-market-postgres

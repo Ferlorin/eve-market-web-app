@@ -43,8 +43,8 @@ development_status:
   # Epic 1: Project Foundation & Development Environment
   epic-1: in-progress
   1-1-initialize-nextjs-16-project-with-starter-template: review
-  1-2-configure-docker-compose-for-local-postgresql: in-progress
-  1-3-set-up-prisma-orm-and-database-connection: ready-for-dev
+  1-2-configure-docker-compose-for-local-postgresql: review
+  1-3-set-up-prisma-orm-and-database-connection: review
   1-4-install-design-system-and-core-dependencies: ready-for-dev
   epic-1-retrospective: optional
 

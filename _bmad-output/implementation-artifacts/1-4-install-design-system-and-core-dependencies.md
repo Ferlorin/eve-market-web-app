@@ -462,16 +462,46 @@ rm -rf src/app/test-deps
 - Headless UI: https://headlessui.com/
 - TanStack Virtual: https://tanstack.com/virtual/latest
 
+## Tasks/Subtasks
+
+### Task 1: Install Production Dependencies
+- [ ] 1.1: Navigate to frontend directory and install packages: `pnpm add axios zod date-fns @headlessui/react @tanstack/react-virtual`
+- [ ] 1.2: Verify installation with `pnpm list` for all 5 packages
+- [ ] 1.3: Verify no peer dependency errors (warnings acceptable)
+
+### Task 2: Create Dependency Test Page
+- [ ] 2.1: Create `src/app/test-deps/page.tsx` with test component
+- [ ] 2.2: Import all dependencies (axios, zod, date-fns, @headlessui/react, @tanstack/react-virtual)
+- [ ] 2.3: Implement test button that exercises all dependencies
+- [ ] 2.4: Add Headless UI Combobox visual test
+
+### Task 3: Verify Installation
+- [ ] 3.1: Run dev server with `pnpm dev`
+- [ ] 3.2: Navigate to http://localhost:3000/test-deps
+- [ ] 3.3: Click "Test Dependencies" button and verify all pass
+- [ ] 3.4: Verify Combobox input renders correctly
+
+### Task 4: Bundle Size Verification
+- [ ] 4.1: Run `pnpm build` to create production bundle
+- [ ] 4.2: Verify First Load JS < 500KB for main routes
+- [ ] 4.3: Verify build completes without errors
+- [ ] 4.4: Run `pnpm lint` and verify no ESLint errors
+
+### Task 5: Cleanup and Documentation
+- [ ] 5.1: Document installed versions in story Dev Agent Record
+- [ ] 5.2: List all modified files
+- [ ] 5.3: Mark story as ready-for-review
+
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_To be filled by Dev agent_
+Claude Sonnet 4.5
 
 ### Completion Notes
 
-_To be filled by Dev agent_
+_In progress_
 
 ### File List
 
-_To be filled by Dev agent_
+_To be filled during implementation_
