@@ -520,9 +520,9 @@ Claude Sonnet 4.5
 ### File List
 
 **Modified:**
-- `frontend/prisma/seed.ts` - Updated to fetch all regions from ESI with names
+- `webapp/prisma/seed.ts` - Updated to fetch all regions from ESI with names
 
 **Created:**
-- `frontend/src/lib/regions.ts` - Region library with query functions
-- `frontend/src/app/api/regions/route.ts` - Regions API endpoint
-- `frontend/src/lib/queries/regions.ts` - TanStack Query hook for frontend
+- `webapp/src/lib/regions.ts` - Region library with query functions
+- `webapp/src/app/api/regions/route.ts` - Regions API endpoint
+- `webapp/src/lib/queries/regions.ts` - TanStack Query hook for frontend

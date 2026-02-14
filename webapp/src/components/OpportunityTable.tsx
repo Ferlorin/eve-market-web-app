@@ -151,13 +151,31 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
   }
 
   return (
-    <div className="w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+    <div 
+      className="w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-800"
+      role="table"
+      aria-label="Trading opportunities"
+    >
       {/* Fixed Table Header with Sortable Columns */}
-      <div className="border-b border-gray-700 bg-gray-900">
-        <div className="grid grid-cols-8 gap-4 px-4 py-3">
+      <div 
+        className="border-b border-gray-700 bg-gray-900"
+        role="rowgroup"
+      >
+        <div 
+          className="grid grid-cols-8 gap-4 px-4 py-3"
+          role="row"
+        >
           <button
             onClick={() => handleSort('itemName')}
             className={headerButtonClass('itemName')}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'itemName'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
           >
             Item <SortIcon column="itemName" />
           </button>
@@ -165,6 +183,14 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           <button
             onClick={() => handleSort('buyStation')}
             className={`${headerButtonClass('buyStation')} text-center`}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'buyStation'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
           >
             Buy Station <SortIcon column="buyStation" />
           </button>
@@ -172,6 +198,14 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           <button
             onClick={() => handleSort('sellStation')}
             className={`${headerButtonClass('sellStation')} text-center`}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'sellStation'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
           >
             Sell Station <SortIcon column="sellStation" />
           </button>
@@ -179,6 +213,14 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           <button
             onClick={() => handleSort('buyPrice')}
             className={`${headerButtonClass('buyPrice')} text-right font-mono`}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'buyPrice'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
           >
             Buy Price <SortIcon column="buyPrice" />
           </button>
@@ -186,6 +228,14 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           <button
             onClick={() => handleSort('sellPrice')}
             className={`${headerButtonClass('sellPrice')} text-right font-mono`}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'sellPrice'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
           >
             Sell Price <SortIcon column="sellPrice" />
           </button>
@@ -193,6 +243,14 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           <button
             onClick={() => handleSort('roi')}
             className={`${headerButtonClass('roi')} text-right font-mono`}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'roi'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
           >
             ROI% <SortIcon column="roi" />
           </button>
@@ -200,11 +258,22 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           <button
             onClick={() => handleSort('volumeAvailable')}
             className={`${headerButtonClass('volumeAvailable')} text-right font-mono`}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'volumeAvailable'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
           >
             Quantity <SortIcon column="volumeAvailable" />
           </button>
 
-          <div className="text-right text-xs font-semibold text-gray-300 uppercase tracking-wider font-mono">
+          <div 
+            className="text-right text-xs font-semibold text-gray-300 uppercase tracking-wider font-mono"
+            role="columnheader"
+          >
             Volume
           </div>
         </div>
@@ -214,6 +283,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
       <div
         ref={parentRef}
         className="h-[600px] overflow-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
+        role="rowgroup"
       >
         <div
           style={{
@@ -236,45 +306,46 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
                 }}
+                role="row"
               >
                 <div className="grid grid-cols-8 gap-4 px-4 py-2 items-center h-full">
                   {/* Item Name */}
-                  <div className="text-sm text-white truncate">
+                  <div className="text-sm text-white truncate" role="cell">
                     {opportunity.itemName}
                   </div>
 
                   {/* Buy Station */}
-                  <div className="text-sm text-gray-300 text-center font-mono">
+                  <div className="text-sm text-gray-300 text-center font-mono" role="cell">
                     {opportunity.buyStation}
                   </div>
 
                   {/* Sell Station */}
-                  <div className="text-sm text-gray-300 text-center font-mono">
+                  <div className="text-sm text-gray-300 text-center font-mono" role="cell">
                     {opportunity.sellStation}
                   </div>
 
                   {/* Buy Price */}
-                  <div className="text-sm text-gray-300 text-right font-mono">
+                  <div className="text-sm text-gray-300 text-right font-mono" role="cell">
                     {formatPrice(opportunity.buyPrice)}
                   </div>
 
                   {/* Sell Price */}
-                  <div className="text-sm text-gray-300 text-right font-mono">
+                  <div className="text-sm text-gray-300 text-right font-mono" role="cell">
                     {formatPrice(opportunity.sellPrice)}
                   </div>
 
                   {/* ROI % */}
-                  <div className="text-sm text-eve-blue text-right font-mono font-semibold">
+                  <div className="text-sm text-eve-blue text-right font-mono font-semibold" role="cell">
                     {formatROI(opportunity.roi)}
                   </div>
 
                   {/* Quantity */}
-                  <div className="text-sm text-gray-300 text-right font-mono">
+                  <div className="text-sm text-gray-300 text-right font-mono" role="cell">
                     {opportunity.volumeAvailable.toLocaleString()}
                   </div>
 
                   {/* Volume (M3) */}
-                  <div className="text-sm text-gray-300 text-right font-mono">
+                  <div className="text-sm text-gray-300 text-right font-mono" role="cell">
                     {formatVolume(opportunity.volumeAvailable)}
                   </div>
                 </div>

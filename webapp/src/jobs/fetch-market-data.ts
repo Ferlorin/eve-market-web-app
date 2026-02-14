@@ -54,39 +54,49 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
     try {
       const orders = await esiClient.getRegionOrders(regionId);
       
-      // Store orders in database (use createMany with skipDuplicates)
-      if (orders.length > 0) {
-        await prisma.marketOrder.createMany({
-          data: orders.map(order => ({
-            orderId: BigInt(order.order_id),
-            regionId: regionId,
-            typeId: order.type_id,
-            price: new Prisma.Decimal(order.price),
-            volumeRemain: order.volume_remain,
-            locationId: BigInt(order.location_id),
-            isBuyOrder: order.is_buy_order,
-            issued: new Date(order.issued),
-            fetchedAt: new Date()
-          })),
-          skipDuplicates: true
+      // Use transaction to replace all orders for this region atomically
+      const result = await prisma.$transaction(async (tx) => {
+        // Delete all existing orders for this region
+        const deleteResult = await tx.marketOrder.deleteMany({
+          where: { regionId }
         });
-      }
-      
-      // Update or create region with lastFetchedAt
-      await prisma.region.upsert({
-        where: { regionId },
-        update: { lastFetchedAt: new Date() },
-        create: {
-          regionId,
-          name: `Region ${regionId}`, // Placeholder name
-          lastFetchedAt: new Date()
+        
+        // Insert fresh orders from ESI
+        if (orders.length > 0) {
+          await tx.marketOrder.createMany({
+            data: orders.map(order => ({
+              orderId: BigInt(order.order_id),
+              regionId: regionId,
+              typeId: order.type_id,
+              price: new Prisma.Decimal(order.price),
+              volumeRemain: order.volume_remain,
+              locationId: BigInt(order.location_id),
+              isBuyOrder: order.is_buy_order,
+              issued: new Date(order.issued),
+              fetchedAt: new Date()
+            }))
+          });
         }
+        
+        // Update or create region with lastFetchedAt
+        await tx.region.upsert({
+          where: { regionId },
+          update: { lastFetchedAt: new Date() },
+          create: {
+            regionId,
+            name: `Region ${regionId}`, // Placeholder name
+            lastFetchedAt: new Date()
+          }
+        });
+        
+        return { deletedCount: deleteResult.count, insertedCount: orders.length };
       });
       
       logger.info({
         event: 'region_fetched',
         regionId,
-        ordersCount: orders.length,
+        ordersDeleted: result.deletedCount,
+        ordersInserted: result.insertedCount,
         attempt: attempt + 1
       });
       

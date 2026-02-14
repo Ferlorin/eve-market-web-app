@@ -523,11 +523,11 @@ Claude Sonnet 4.5
 ### File List
 
 **Modified:**
-- [frontend/src/app/globals.css](frontend/src/app/globals.css) - Added EVE color palette
-- [frontend/src/app/layout.tsx](frontend/src/app/layout.tsx) - Added QueryClientProvider
-- [frontend/src/app/page.tsx](frontend/src/app/page.tsx) - Added RegionSelector test interface
-- [frontend/package.json](frontend/package.json) - Added @heroicons/react
+- [webapp/src/app/globals.css](webapp/src/app/globals.css) - Added EVE color palette
+- [webapp/src/app/layout.tsx](webapp/src/app/layout.tsx) - Added QueryClientProvider
+- [webapp/src/app/page.tsx](webapp/src/app/page.tsx) - Added RegionSelector test interface
+- [webapp/package.json](webapp/package.json) - Added @heroicons/react
 
 **Created:**
-- [frontend/src/components/RegionSelector.tsx](frontend/src/components/RegionSelector.tsx) - Main component
-- [frontend/src/app/providers.tsx](frontend/src/app/providers.tsx) - QueryClientProvider wrapper
+- [webapp/src/components/RegionSelector.tsx](webapp/src/components/RegionSelector.tsx) - Main component
+- [webapp/src/app/providers.tsx](webapp/src/app/providers.tsx) - QueryClientProvider wrapper

@@ -536,5 +536,5 @@ Claude Sonnet 4.5
 ### File List
 
 **Modified:**
-- [frontend/src/app/layout.tsx](frontend/src/app/layout.tsx) - Updated fonts and metadata
-- [frontend/src/app/page.tsx](frontend/src/app/page.tsx) - Complete main page layout with validation
+- [webapp/src/app/layout.tsx](webapp/src/app/layout.tsx) - Updated fonts and metadata
+- [webapp/src/app/page.tsx](webapp/src/app/page.tsx) - Complete main page layout with validation

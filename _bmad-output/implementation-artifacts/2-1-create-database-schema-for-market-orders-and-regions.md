@@ -399,9 +399,9 @@ Claude Sonnet 4.5
 ### File List
 
 **Modified:**
-- `frontend/prisma/schema.prisma` - Added Region and MarketOrder models
-- `frontend/prisma.config.ts` - Added seed command configuration
+- `webapp/prisma/schema.prisma` - Added Region and MarketOrder models
+- `webapp/prisma.config.ts` - Added seed command configuration
 
 **Created:**
-- `frontend/prisma/migrations/20260214201515_add_regions_and_orders/migration.sql` - Database migration
-- `frontend/prisma/seed.ts` - Database seed file with initial regions
+- `webapp/prisma/migrations/20260214201515_add_regions_and_orders/migration.sql` - Database migration
+- `webapp/prisma/seed.ts` - Database seed file with initial regions

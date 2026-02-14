@@ -528,8 +528,8 @@ Claude Sonnet 4.5
 ### File List
 
 **Modified:**
-- `frontend/package.json` - Added 5 production dependencies
-- `frontend/package-lock.json` - Updated with new package locks
+- `webapp/package.json` - Added 5 production dependencies
+- `webapp/package-lock.json` - Updated with new package locks
 
 **Created:**
-- `frontend/src/app/test-deps/page.tsx` - Dependency test page
+- `webapp/src/app/test-deps/page.tsx` - Dependency test page

@@ -564,8 +564,8 @@ Claude Sonnet 4.5
 ### File List
 
 **Modified:**
-- [frontend/src/app/globals.css](frontend/src/app/globals.css) - Added gray-850 color
+- [webapp/src/app/globals.css](webapp/src/app/globals.css) - Added gray-850 color
 
 **Created:**
-- [frontend/src/components/OpportunityTable.tsx](frontend/src/components/OpportunityTable.tsx) - Virtual scrolling table component
-- [frontend/src/app/test-table/page.tsx](frontend/src/app/test-table/page.tsx) - Test page with 10K rows
+- [webapp/src/components/OpportunityTable.tsx](webapp/src/components/OpportunityTable.tsx) - Virtual scrolling table component
+- [webapp/src/app/test-table/page.tsx](webapp/src/app/test-table/page.tsx) - Test page with 10K rows

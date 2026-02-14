@@ -132,7 +132,7 @@ The system centers on three core workflows:
 
 4. **Developer Experience**
    - Docker Compose single-command startup (`docker-compose up`)
-   - Hot reload for frontend/backend development
+   - Hot reload for webapp/backend development
    - Easy debugging with good log context
    - Minimal maintenance design (<30 min/week target)
    - Automated deployment (push to main = deploy)
@@ -187,7 +187,7 @@ After analyzing your project requirements, scalability needs, and zero-cost host
 **2. Language Selection: TypeScript (Full Stack)**
 
 **Why TypeScript everywhere:**
-- **Shared types:** Define market order interfaces once, use in frontend/backend/database queries
+- **Shared types:** Define market order interfaces once, use in webapp/backend/database queries
 - **Catch errors early:** ESI API response parsing, ROI calculations, database schema—all type-safe
 - **Better refactoring:** When scaling from monolith → microservices, TypeScript prevents breaking changes
 - **Next.js defaults:** `create-next-app` now enables TypeScript by default (no configuration needed)

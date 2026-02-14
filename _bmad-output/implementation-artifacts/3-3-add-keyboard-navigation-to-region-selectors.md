@@ -621,8 +621,8 @@ Claude Sonnet 4.5
 ### File List
 
 **Modified:**
-- [frontend/src/components/RegionSelector.tsx](frontend/src/components/RegionSelector.tsx) - Added keyboard navigation
-- [frontend/src/app/globals.css](frontend/src/app/globals.css) - Added focus styles and scrollbar
+- [webapp/src/components/RegionSelector.tsx](webapp/src/components/RegionSelector.tsx) - Added keyboard navigation
+- [webapp/src/app/globals.css](webapp/src/app/globals.css) - Added focus styles and scrollbar
 
 **Created:**
-- [frontend/src/app/test-keyboard/page.tsx](frontend/src/app/test-keyboard/page.tsx) - Keyboard test interface
+- [webapp/src/app/test-keyboard/page.tsx](webapp/src/app/test-keyboard/page.tsx) - Keyboard test interface

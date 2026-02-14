@@ -494,5 +494,5 @@ Claude Sonnet 4.5
 ### File List
 
 **Created:**
-- `frontend/src/lib/esi-client.ts` - ESI API client with rate limiting
-- `frontend/src/lib/__tests__/esi-client.test.ts` - Test script for ESI client
+- `webapp/src/lib/esi-client.ts` - ESI API client with rate limiting
+- `webapp/src/lib/__tests__/esi-client.test.ts` - Test script for ESI client

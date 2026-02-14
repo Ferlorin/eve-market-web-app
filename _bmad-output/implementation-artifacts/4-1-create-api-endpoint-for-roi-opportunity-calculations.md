@@ -525,4 +525,4 @@ Claude Sonnet 4.5
 ### File List
 
 **Created:**
-- [frontend/src/app/api/opportunities/route.ts](frontend/src/app/api/opportunities/route.ts) - ROI calculation API endpoint
+- [webapp/src/app/api/opportunities/route.ts](webapp/src/app/api/opportunities/route.ts) - ROI calculation API endpoint

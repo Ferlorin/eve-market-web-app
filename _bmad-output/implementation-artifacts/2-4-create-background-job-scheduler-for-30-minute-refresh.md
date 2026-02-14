@@ -469,12 +469,12 @@ Claude Sonnet 4.5
 ### File List
 
 **Created:**
-- `frontend/vercel.json` - Vercel cron configuration
-- `frontend/src/app/api/cron/fetch-markets/route.ts` - Cron API endpoint
-- `frontend/scripts/dev-cron.ts` - Local development cron scheduler  
-- `frontend/scripts/test-cron-endpoint.ts` - Endpoint testing script
-- `frontend/.env.example` - Environment variable template
+- `webapp/vercel.json` - Vercel cron configuration
+- `webapp/src/app/api/cron/fetch-markets/route.ts` - Cron API endpoint
+- `webapp/scripts/dev-cron.ts` - Local development cron scheduler  
+- `webapp/scripts/test-cron-endpoint.ts` - Endpoint testing script
+- `webapp/.env.example` - Environment variable template
 
 **Modified:**
-- `frontend/.env.local` - Added CRON_SECRET
-- `frontend/package.json` - Added dev-cron script
+- `webapp/.env.local` - Added CRON_SECRET
+- `webapp/package.json` - Added dev-cron script

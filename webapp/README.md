@@ -1,4 +1,4 @@
-# EVE Market Web App - Frontend
+# EVE Market Web App - Application
 
 A Next.js 16 web application for analyzing trading opportunities in EVE Online markets using real-time data from the EVE Swagger Interface (ESI) API.
 
@@ -23,7 +23,7 @@ A Next.js 16 web application for analyzing trading opportunities in EVE Online m
 
 1. Start the PostgreSQL database using Docker Compose (from project root):
    ```bash
-   cd ..  # Navigate to project root if in frontend/
+   cd ..  # Navigate to project root if in webapp/
    docker-compose up -d
    ```
 
@@ -32,16 +32,16 @@ A Next.js 16 web application for analyzing trading opportunities in EVE Online m
    docker-compose ps  # Should show "healthy" status
    ```
 
-3. The database connection is configured in `frontend/.env.local`:
+3. The database connection is configured in `webapp/.env.local`:
    ```
    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/eve_market"
    ```
 
 ### Installation
 
-1. Clone the repository and navigate to the frontend directory:
+1. Clone the repository and navigate to the webapp directory:
    ```bash
-   cd eve-market-web-app/frontend
+   cd eve-market-web-app/webapp
    ```
 
 2. Install dependencies:
@@ -85,14 +85,14 @@ npm run lint
 ## Project Structure
 
 ```
-frontend/
+webapp/
 ├── src/
 │   ├── app/                 # Next.js App Router pages
 │   │   ├── page.tsx        # Home page
 │   │   ├── layout.tsx      # Root layout
 │   │   ├── globals.css     # Global styles & Tailwind config
 │   │   └── favicon.ico
-│   └── components/         # React components (to be added)
+│   └── components/         # React components
 ├── public/                 # Static assets
 ├── package.json
 ├── tsconfig.json           # TypeScript configuration

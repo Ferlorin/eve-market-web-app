@@ -471,10 +471,10 @@ Claude Sonnet 4.5
 ### File List
 
 **Modified:**
-- `frontend/package.json` - Added fetch-data script
+- `webapp/package.json` - Added fetch-data script
 
 **Created:**
-- `frontend/src/lib/logger.ts` - Structured JSON logger
-- `frontend/src/jobs/fetch-market-data.ts` - Market data fetch logic with retry
-- `frontend/scripts/test-fetch.ts` - Full fetch test script
-- `frontend/scripts/quick-test-fetch.ts` - Quick single-region test
+- `webapp/src/lib/logger.ts` - Structured JSON logger
+- `webapp/src/jobs/fetch-market-data.ts` - Market data fetch logic with retry
+- `webapp/scripts/test-fetch.ts` - Full fetch test script
+- `webapp/scripts/quick-test-fetch.ts` - Quick single-region test

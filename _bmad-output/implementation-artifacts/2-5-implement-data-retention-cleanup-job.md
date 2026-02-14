@@ -528,11 +528,11 @@ Claude Sonnet 4.5
 ### File List
 
 **Created:**
-- `frontend/src/jobs/cleanup-old-data.ts` - Cleanup job with 7-day retention
-- `frontend/src/app/api/cron/cleanup/route.ts` - Cleanup API endpoint
-- `frontend/scripts/test-cleanup.ts` - Cleanup testing script
-- `frontend/scripts/check-db-size.ts` - Database size monitoring script
+- `webapp/src/jobs/cleanup-old-data.ts` - Cleanup job with 7-day retention
+- `webapp/src/app/api/cron/cleanup/route.ts` - Cleanup API endpoint
+- `webapp/scripts/test-cleanup.ts` - Cleanup testing script
+- `webapp/scripts/check-db-size.ts` - Database size monitoring script
 
 **Modified:**
-- `frontend/vercel.json` - Added daily cleanup cron schedule
-- `frontend/package.json` - Added cleanup and db-size scripts
+- `webapp/vercel.json` - Added daily cleanup cron schedule
+- `webapp/package.json` - Added cleanup and db-size scripts

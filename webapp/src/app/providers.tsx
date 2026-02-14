@@ -1,6 +1,8 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@/lib/theme-context';
+import { FontScaleProvider } from '@/lib/font-scale-context';
 import { useState, type ReactNode } from 'react';
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -19,7 +21,11 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <ThemeProvider>
+        <FontScaleProvider>
+          {children}
+        </FontScaleProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
