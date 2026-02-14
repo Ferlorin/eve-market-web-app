@@ -17,7 +17,8 @@ async function fetchOpportunities(
     throw new Error('Failed to fetch opportunities');
   }
 
-  return response.json();
+  const json = await response.json();
+  return json.data || [];
 }
 
 export function useOpportunities(params: OpportunitiesParams | null) {

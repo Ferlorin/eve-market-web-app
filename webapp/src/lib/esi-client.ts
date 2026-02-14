@@ -23,6 +23,17 @@ const ESIRegionSchema = z.object({
   name: z.string().optional(),
 });
 
+const ESIStationSchema = z.object({
+  station_id: z.number(),
+  name: z.string(),
+  system_id: z.number().optional(),
+});
+
+const ESIStructureSchema = z.object({
+  name: z.string(),
+  solar_system_id: z.number().optional(),
+});
+
 // Rate Limiter using Token Bucket Algorithm
 class RateLimiter {
   private tokens: number;
@@ -185,6 +196,51 @@ export class ESIClient {
         false,
         { regionId }
       );
+    }
+  }
+  
+  async getStationName(stationId: number): Promise<string> {
+    try {
+      const response = await this.axiosInstance.get(
+        `/universe/stations/${stationId}/`
+      );
+      
+      const station = ESIStationSchema.parse(response.data);
+      return station.name;
+    } catch (error) {
+      if (error instanceof ESIError) {
+        error.context = { ...error.context, stationId };
+        throw error;
+      }
+      throw new ESIError(
+        `Failed to fetch station ${stationId}`,
+        0,
+        `/universe/stations/${stationId}/`,
+        false,
+        { stationId }
+      );
+    }
+  }
+  
+  async getStructureName(structureId: bigint): Promise<string | null> {
+    try {
+      const response = await this.axiosInstance.get(
+        `/universe/structures/${structureId}/`
+      );
+      
+      const structure = ESIStructureSchema.parse(response.data);
+      return structure.name;
+    } catch (error) {
+      // Structures may require auth or be inaccessible - return null instead of throwing
+      if (error instanceof ESIError && (error.statusCode === 403 || error.statusCode === 401)) {
+        return null; // Forbidden/Unauthorized - private structure
+      }
+      if (error instanceof ESIError && error.statusCode === 404) {
+        return null; // Not found
+      }
+      // Other errors - log but don't crash
+      console.warn(`Failed to fetch structure ${structureId}:`, error);
+      return null;
     }
   }
 }

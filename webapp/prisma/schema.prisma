@@ -39,4 +39,14 @@ model MarketOrder {
   @@map("market_orders")
 }
 
+// Location Cache (Stations and Structures)
+model Location {
+  id         Int      @id @default(autoincrement())
+  locationId BigInt   @unique // ESI location ID (station or structure)
+  name       String   // Human-readable name
+  type       String   // "station" or "structure"
+  fetchedAt  DateTime @default(now()) // When we cached this name
+  
+  @@map("locations")
+}
 

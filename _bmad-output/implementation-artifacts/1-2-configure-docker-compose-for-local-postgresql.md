@@ -332,11 +332,11 @@ All acceptance criteria met. Database ready for Story 1.3 (Prisma ORM setup).
 
 **Created:**
 - docker-compose.yml (project root)
-- frontend/.env.local (DATABASE_URL configuration)
+- webapp/.env.local (DATABASE_URL configuration)
 
 **Modified:**
 - .gitignore (added postgres_data/)
-- frontend/README.md (added database setup section)
+- webapp/README.md (added database setup section)
 - _bmad-output/dev-progress-log.md (progress tracking)
 - _bmad-output/implementation-artifacts/sprint-status.yaml (story 1-2: in-progress)
 - _bmad-output/implementation-artifacts/1-2-configure-docker-compose-for-local-postgresql.md (added Tasks/Subtasks, marked complete)

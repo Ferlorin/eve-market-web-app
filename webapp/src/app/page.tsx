@@ -6,6 +6,7 @@ import { DataFreshness } from '@/components/DataFreshness';
 import { StaleDataBanner } from '@/components/StaleDataBanner';
 import { OpportunityTable } from '@/components/OpportunityTable';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
 import { useRegions } from '@/lib/queries/regions';
 import { useOpportunities } from '@/lib/queries/opportunities';
 import type { Region } from '@/lib/regions';
@@ -15,6 +16,13 @@ export default function HomePage() {
   const [buyMarket, setBuyMarket] = useState<Region | null>(null);
   const [sellMarket, setSellMarket] = useState<Region | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Swap buy and sell markets
+  const handleSwapMarkets = () => {
+    const temp = buyMarket;
+    setBuyMarket(sellMarket);
+    setSellMarket(temp);
+  };
 
   // Fetch opportunities when both markets are selected
   const opportunitiesParams =
@@ -43,29 +51,29 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen theme-bg-primary flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-eve-blue mb-4"></div>
-          <p className="text-gray-400">Loading regions...</p>
+          <p className="theme-text-secondary">Loading regions...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen theme-bg-primary">
       {/* Stale Data Warning Banner */}
       <StaleDataBanner />
 
       {/* Header */}
-      <header className="border-b border-gray-700 bg-gray-800">
+      <header className="border-b theme-border theme-bg-secondary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-2xl font-bold theme-text-primary">
                 EVE Market Scanner
               </h1>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm theme-text-secondary mt-1">
                 Find profitable trading opportunities across regions
               </p>
             </div>
@@ -81,23 +89,40 @@ export default function HomePage() {
           <h2 id="market-selection-heading" className="sr-only">
             Market Selection
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <RegionSelector
-              label="Buy Market"
-              placeholder="Select region to buy from..."
-              value={buyMarket}
-              onChange={setBuyMarket}
-              regions={regions ?? []}
-              autoFocus
-            />
+          <div className="flex flex-col md:flex-row items-start md:items-end gap-4">
+            {/* Buy Market */}
+            <div className="flex-1 w-full">
+              <RegionSelector
+                label="Buy Market"
+                placeholder="Select region to buy from..."
+                value={buyMarket}
+                onChange={setBuyMarket}
+                regions={regions ?? []}
+                autoFocus
+              />
+            </div>
 
-            <RegionSelector
-              label="Sell Market"
-              placeholder="Select region to sell in..."
-              value={sellMarket}
-              onChange={setSellMarket}
-              regions={regions ?? []}
-            />
+            {/* Swap Button */}
+            <button
+              onClick={handleSwapMarkets}
+              disabled={!buyMarket && !sellMarket}
+              className="theme-bg-secondary theme-border border rounded-lg p-3 hover:bg-eve-blue/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-eve-blue focus:ring-offset-2 theme-bg-primary"
+              title="Swap buy and sell markets"
+              aria-label="Swap buy and sell markets"
+            >
+              <ArrowsRightLeftIcon className="h-6 w-6 theme-text-primary" />
+            </button>
+
+            {/* Sell Market */}
+            <div className="flex-1 w-full">
+              <RegionSelector
+                label="Sell Market"
+                placeholder="Select region to sell in..."
+                value={sellMarket}
+                onChange={setSellMarket}
+                regions={regions ?? []}
+              />
+            </div>
           </div>
 
           {/* Validation Error */}
@@ -126,11 +151,11 @@ export default function HomePage() {
 
           {/* Selection Summary */}
           {buyMarket && sellMarket && !validationError && (
-            <div className="mt-4 p-4 rounded-lg bg-gray-800 border border-gray-700">
-              <p className="text-sm text-gray-400 mb-2">
+            <div className="mt-4 p-4 rounded-lg theme-bg-secondary theme-border border">
+              <p className="text-sm theme-text-secondary mb-2">
                 Comparing opportunities:
               </p>
-              <div className="flex items-center gap-4 text-white">
+              <div className="flex items-center gap-4 theme-text-primary">
                 <span className="font-medium">{buyMarket.name}</span>
                 <svg
                   className="h-5 w-5 text-eve-blue"
@@ -158,15 +183,15 @@ export default function HomePage() {
               Trading Opportunities
             </h2>
             {opportunitiesLoading && (
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
+              <div className="theme-bg-secondary theme-border border rounded-lg p-12 text-center">
                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-eve-blue mb-4"></div>
-                <p className="text-gray-400">Loading opportunities...</p>
+                <p className="theme-text-secondary">Loading opportunities...</p>
               </div>
             )}
 
             {opportunitiesError && (
               <div
-                className="bg-gray-800 border border-eve-red rounded-lg p-6"
+                className="theme-bg-secondary border border-eve-red rounded-lg p-6"
                 role="alert"
               >
                 <div className="flex items-center gap-3">
@@ -185,7 +210,7 @@ export default function HomePage() {
                     <h3 className="text-sm font-medium text-eve-red">
                       Unable to load opportunities
                     </h3>
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-sm theme-text-secondary mt-1">
                       The server encountered an error. Please try refreshing in
                       a few minutes.
                     </p>
@@ -198,9 +223,9 @@ export default function HomePage() {
               !opportunitiesError &&
               opportunities &&
               opportunities.length === 0 && (
-                <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
+                <div className="theme-bg-secondary theme-border border rounded-lg p-12 text-center">
                   <svg
-                    className="mx-auto h-12 w-12 text-gray-600"
+                    className="mx-auto h-12 w-12 theme-text-secondary"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -212,10 +237,10 @@ export default function HomePage() {
                       d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                     />
                   </svg>
-                  <h3 className="mt-4 text-lg font-medium text-white">
+                  <h3 className="mt-4 text-lg font-medium theme-text-primary">
                     No profitable trades found
                   </h3>
-                  <p className="mt-2 text-sm text-gray-400 max-w-md mx-auto">
+                  <p className="mt-2 text-sm theme-text-secondary max-w-md mx-auto">
                     No profitable trades found between {buyMarket.name} and{' '}
                     {sellMarket.name} with current market conditions. Try
                     different regions.
@@ -238,9 +263,9 @@ export default function HomePage() {
             <h2 id="empty-state-heading" className="sr-only">
               Getting Started
             </h2>
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
+            <div className="theme-bg-secondary theme-border border rounded-lg p-12 text-center">
               <svg
-                className="mx-auto h-12 w-12 text-gray-600"
+                className="mx-auto h-12 w-12 theme-text-secondary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -252,10 +277,10 @@ export default function HomePage() {
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                 />
               </svg>
-              <h3 className="mt-4 text-lg font-medium text-white">
+              <h3 className="mt-4 text-lg font-medium theme-text-primary">
                 Select markets to begin
               </h3>
-              <p className="mt-2 text-sm text-gray-400 max-w-md mx-auto">
+              <p className="mt-2 text-sm theme-text-secondary max-w-md mx-auto">
                 Choose a buy market and a sell market to see profitable trading opportunities across EVE regions.
               </p>
             </div>

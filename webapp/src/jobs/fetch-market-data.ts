@@ -4,7 +4,7 @@ import pLimit from 'p-limit';
 import { logger } from '@/lib/logger';
 import { Prisma } from '@prisma/client';
 
-const limit = pLimit(10); // Limit parallel region fetches (ESI rate limiter handles individual requests)
+const limit = pLimit(5); // Reduced concurrency to avoid memory issues
 
 export async function fetchAllRegions() {
   const startTime = Date.now();
@@ -55,6 +55,7 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
       const orders = await esiClient.getRegionOrders(regionId);
       
       // Use transaction to replace all orders for this region atomically
+      // Increased timeout for large regions (50K+ orders can take 30+ seconds)
       const result = await prisma.$transaction(async (tx) => {
         // Delete all existing orders for this region
         const deleteResult = await tx.marketOrder.deleteMany({
@@ -78,18 +79,21 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
           });
         }
         
-        // Update or create region with lastFetchedAt
-        await tx.region.upsert({
-          where: { regionId },
-          update: { lastFetchedAt: new Date() },
-          create: {
-            regionId,
-            name: `Region ${regionId}`, // Placeholder name
-            lastFetchedAt: new Date()
-          }
-        });
-        
         return { deletedCount: deleteResult.count, insertedCount: orders.length };
+      }, {
+        timeout: 60000, // 60 second timeout for large regions
+        maxWait: 10000  // Wait up to 10s to acquire transaction lock
+      });
+      
+      // Update region timestamp outside transaction (doesn't need atomicity)
+      await prisma.region.upsert({
+        where: { regionId },
+        update: { lastFetchedAt: new Date() },
+        create: {
+          regionId,
+          name: `Region ${regionId}`, // Placeholder name
+          lastFetchedAt: new Date()
+        }
       });
       
       logger.info({

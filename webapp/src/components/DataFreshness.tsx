@@ -41,7 +41,7 @@ export function DataFreshness() {
   const relativeTime = formatDistanceToNow(lastFetchedAt, { addSuffix: true });
 
   return (
-    <footer className="border-t border-gray-700 bg-gray-800 px-4 py-3">
+    <footer className="border-t theme-border theme-bg-secondary px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isCriticallyStale ? (
@@ -66,7 +66,7 @@ export function DataFreshness() {
             </>
           ) : (
             <ClockIcon 
-              className="h-4 w-4 text-gray-500" 
+              className="h-4 w-4 text-success" 
               aria-hidden="true"
             />
           )}
@@ -77,7 +77,7 @@ export function DataFreshness() {
                 ? 'text-eve-red'
                 : isStale
                 ? 'text-eve-gold'
-                : 'text-gray-500'
+                : 'text-success'
             }`}
             title={formattedTime}
           >
@@ -85,7 +85,7 @@ export function DataFreshness() {
           </span>
         </div>
 
-        <div className="text-xs text-gray-600">
+        <div className="text-xs theme-text-secondary">
           {formattedTime}
         </div>
       </div>
