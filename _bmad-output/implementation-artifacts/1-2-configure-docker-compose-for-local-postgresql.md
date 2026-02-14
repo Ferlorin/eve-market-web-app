@@ -17,6 +17,32 @@ So that I have a reproducible development environment without manual database se
 **And** the database persists data across container restarts
 **And** running `docker-compose down` stops the container cleanly
 
+## Tasks/Subtasks
+
+### Task 1: Create Docker Compose Configuration
+- [ ] Create `docker-compose.yml` in project root with postgres:16 image
+- [ ] Configure environment variables (POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
+- [ ] Configure port mapping (5432:5432)
+- [ ] Add volume persistence (postgres_data)
+- [ ] Add healthcheck configuration
+
+### Task 2: Create Environment Configuration
+- [ ] Create `.env.local` with DATABASE_URL connection string
+- [ ] Update `.gitignore` to exclude .env.local and postgres_data/
+- [ ] Document environment variables in README
+
+### Task 3: Test Docker Container
+- [ ] Run `docker-compose up -d` and verify container starts
+- [ ] Check container status with `docker-compose ps` (should show "healthy")
+- [ ] View logs to confirm "ready to accept connections"
+- [ ] Test `docker-compose down` stops cleanly
+
+### Task 4: Verify Database Connection
+- [ ] Connect via psql: `docker-compose exec postgres psql -U postgres -d eve_market`
+- [ ] Verify database exists with `\l` command
+- [ ] Test container restart preserves data
+- [ ] Document connection verification steps
+
 ## Technical Requirements
 
 ### Docker Compose Configuration
