@@ -6,13 +6,32 @@ import { Prisma } from '@prisma/client';
 
 const limit = pLimit(1); // Process one region at a time to minimize memory usage
 
-export async function fetchAllRegions() {
+export async function fetchAllRegions(chunkIndex?: number, totalChunks?: number) {
   const startTime = Date.now();
-  logger.info({ event: 'fetch_started' });
+  logger.info({ event: 'fetch_started', chunkIndex, totalChunks });
   
   try {
     // Fetch list of all EVE regions
-    const regionIds = await esiClient.getAllRegions();
+    const allRegionIds = await esiClient.getAllRegions();
+    
+    // Filter to only process this chunk if chunking is enabled
+    let regionIds = allRegionIds;
+    if (chunkIndex !== undefined && totalChunks !== undefined && totalChunks > 1) {
+      const chunkSize = Math.ceil(allRegionIds.length / totalChunks);
+      const startIdx = chunkIndex * chunkSize;
+      const endIdx = Math.min(startIdx + chunkSize, allRegionIds.length);
+      regionIds = allRegionIds.slice(startIdx, endIdx);
+      
+      logger.info({
+        event: 'chunk_info',
+        chunkIndex,
+        totalChunks,
+        totalRegions: allRegionIds.length,
+        chunkRegions: regionIds.length,
+        regionRange: `${startIdx}-${endIdx - 1}`
+      });
+    }
+    
     logger.info({ event: 'regions_loaded', count: regionIds.length });
     
     // Process regions in sequential batches to prevent memory overflow
@@ -52,7 +71,8 @@ export async function fetchAllRegions() {
         batchSuccessful,
         batchFailed,
         totalSuccessful: successful,
-        totalFailed: failed
+        totalFailed: failed,
+        memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
       });
       
       // Force GC and pause between batches to allow memory cleanup
@@ -60,9 +80,9 @@ export async function fetchAllRegions() {
         global.gc();
       }
       
-      // Small delay to allow GC to complete
+      // Small delay to allow GC to complete and connections to stabilize
       if (i + BATCH_SIZE < regionIds.length) {
-        await sleep(2000);
+        await sleep(500);
       }
     }
     
@@ -73,7 +93,8 @@ export async function fetchAllRegions() {
       total: regionIds.length,
       successful,
       failed,
-      durationMs: duration
+      durationMs: duration,
+      memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
     });
     
     return { regionsProcessed: successful, failed, duration };
@@ -129,6 +150,11 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
 
         hasMorePages = page < totalPages;
         page++;
+        
+        // Force GC every 5 pages to prevent accumulation
+        if (page % 5 === 0 && global.gc) {
+          global.gc();
+        }
       }
 
       // Update region timestamp
@@ -148,9 +174,14 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
         ordersDeleted: deleteResult.count,
         ordersInserted: totalInserted,
         pages: page - 1,
-        attempt: attempt + 1
+        attempt: attempt + 1,
+        memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
       });
 
+      // Disconnect Prisma to clear internal state and prevent memory accumulation
+      await prisma.$disconnect();
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       return; // Success
     } catch (error) {
       lastError = error as Error;

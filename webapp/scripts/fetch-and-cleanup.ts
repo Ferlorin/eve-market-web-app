@@ -3,25 +3,32 @@ import { cleanupOldOrders, getDatabaseStats } from '../src/jobs/cleanup-old-data
 
 async function main() {
   console.log('Starting market data fetch...\n');
+  
+  // Support chunked processing via environment variables
+  const chunkIndex = process.env.CHUNK_INDEX ? parseInt(process.env.CHUNK_INDEX, 10) : undefined;
+  const totalChunks = process.env.TOTAL_CHUNKS ? parseInt(process.env.TOTAL_CHUNKS, 10) : undefined;
 
   try {
-    const result = await fetchAllRegions();
+    const result = await fetchAllRegions(chunkIndex, totalChunks);
     console.log('\nFetch completed:', result);
   } catch (error) {
     console.error('\nFetch failed:', error);
     process.exit(1);
   }
 
-  console.log('\nRunning cleanup...');
-  try {
-    const cleanup = await cleanupOldOrders();
-    console.log('Cleanup completed:', cleanup);
+  // Only run cleanup on the last chunk or when not chunking
+  if (!chunkIndex || chunkIndex === (totalChunks || 1) - 1) {
+    console.log('\nRunning cleanup...');
+    try {
+      const cleanup = await cleanupOldOrders();
+      console.log('Cleanup completed:', cleanup);
 
-    const stats = await getDatabaseStats();
-    console.log('Database stats:', stats);
-  } catch (error) {
-    console.error('Cleanup failed:', error);
-    // Don't exit 1 — fetch succeeded, cleanup is secondary
+      const stats = await getDatabaseStats();
+      console.log('Database stats:', stats);
+    } catch (error) {
+      console.error('Cleanup failed:', error);
+      // Don't exit 1 — fetch succeeded, cleanup is secondary
+    }
   }
 
   process.exit(0);
