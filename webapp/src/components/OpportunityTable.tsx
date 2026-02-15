@@ -14,6 +14,7 @@ export interface Opportunity {
   sellStation: string;
   roi: number;
   volumeAvailable: number;
+  maxProfit: number;
 }
 
 type SortColumn =
@@ -24,7 +25,8 @@ type SortColumn =
   | 'roi'
   | 'volumeAvailable'
   | 'buyStation'
-  | 'sellStation';
+  | 'sellStation'
+  | 'maxProfit';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -75,6 +77,10 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
         case 'sellStation':
           aVal = a.sellStation;
           bVal = b.sellStation;
+          break;
+        case 'maxProfit':
+          aVal = a.maxProfit;
+          bVal = b.maxProfit;
           break;
         default:
           return 0;
@@ -143,14 +149,14 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
 
   const headerButtonClass = (column: SortColumn) =>
     `w-full text-left px-0 py-0 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer
-    ${sortColumn === column ? 'text-eve-blue' : 'text-gray-300 hover:text-white'}
+    ${sortColumn === column ? 'text-eve-blue' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'}
     focus:outline-none focus-visible:ring-2 focus-visible:ring-eve-blue rounded`;
 
   if (data.length === 0) {
     return (
-      <div className="w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-800">
+      <div className="w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="p-12 text-center">
-          <p className="text-gray-400">No opportunities found</p>
+          <p className="text-gray-500 dark:text-gray-400">No opportunities found</p>
         </div>
       </div>
     );
@@ -158,17 +164,17 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
 
   return (
     <div 
-      className="w-full overflow-hidden rounded-lg border border-gray-700 bg-gray-800"
+      className="w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
       role="table"
       aria-label="Trading opportunities"
     >
       {/* Fixed Table Header with Sortable Columns */}
       <div 
-        className="border-b border-gray-700 bg-gray-900"
+        className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
         role="rowgroup"
       >
         <div
-          className="grid grid-cols-9 gap-4 px-4 py-3"
+          className="grid grid-cols-10 gap-4 px-4 py-3"
           role="row"
         >
           <button
@@ -291,8 +297,23 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
             Quantity <SortIcon column="volumeAvailable" />
           </button>
 
+          <button
+            onClick={() => handleSort('maxProfit')}
+            className={`${headerButtonClass('maxProfit')} text-right font-mono`}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'maxProfit'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
+          >
+            Max Profit <SortIcon column="maxProfit" />
+          </button>
+
           <div 
-            className="text-right text-xs font-semibold text-gray-300 uppercase tracking-wider font-mono"
+            className="text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider font-mono"
             role="columnheader"
           >
             Volume
@@ -303,7 +324,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
       {/* Scrollable Table Body with Virtual Scrolling */}
       <div
         ref={parentRef}
-        className="h-[600px] overflow-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
+        className="h-[600px] overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800"
         role="rowgroup"
       >
         <div
@@ -321,7 +342,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
               <div
                 key={virtualRow.key}
                 className={`absolute top-0 left-0 w-full ${
-                  isEven ? 'bg-gray-800' : 'bg-gray-850'
+                  isEven ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-850'
                 }`}
                 style={{
                   height: `${virtualRow.size}px`,
@@ -329,29 +350,29 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
                 }}
                 role="row"
               >
-                <div className="grid grid-cols-9 gap-4 px-4 py-2 items-center h-full min-w-0 [&>div]:min-w-0">
+                <div className="grid grid-cols-10 gap-4 px-4 py-2 items-center h-full min-w-0 [&>div]:min-w-0">
                   {/* Item Name */}
-                  <div className="text-sm text-white truncate" role="cell" title={opportunity.itemName}>
+                  <div className="text-sm text-gray-900 dark:text-white truncate" role="cell" title={opportunity.itemName}>
                     {opportunity.itemName}
                   </div>
 
                   {/* Buy Station */}
-                  <div className="text-sm text-gray-300 text-center truncate" role="cell" title={opportunity.buyStation}>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 text-center truncate" role="cell" title={opportunity.buyStation}>
                     {opportunity.buyStation}
                   </div>
 
                   {/* Sell Station */}
-                  <div className="text-sm text-gray-300 text-center truncate" role="cell" title={opportunity.sellStation}>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 text-center truncate" role="cell" title={opportunity.sellStation}>
                     {opportunity.sellStation}
                   </div>
 
                   {/* Buy Price */}
-                  <div className="text-sm text-gray-300 text-right font-mono" role="cell">
+                  <div className="text-sm text-gray-700 dark:text-gray-300 text-right font-mono" role="cell">
                     {formatPrice(opportunity.buyPrice)}
                   </div>
 
                   {/* Sell Price */}
-                  <div className="text-sm text-gray-300 text-right font-mono" role="cell">
+                  <div className="text-sm text-gray-700 dark:text-gray-300 text-right font-mono" role="cell">
                     {formatPrice(opportunity.sellPrice)}
                   </div>
 
@@ -366,12 +387,17 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
                   </div>
 
                   {/* Quantity */}
-                  <div className="text-sm text-gray-300 text-right font-mono" role="cell">
+                  <div className="text-sm text-gray-700 dark:text-gray-300 text-right font-mono" role="cell">
                     {opportunity.volumeAvailable.toLocaleString()}
                   </div>
 
+                  {/* Max Profit */}
+                  <div className="text-sm text-green-500 dark:text-green-400 text-right font-mono font-bold" role="cell">
+                    {formatPrice(opportunity.maxProfit)}
+                  </div>
+
                   {/* Volume (M3) */}
-                  <div className="text-sm text-gray-300 text-right font-mono" role="cell">
+                  <div className="text-sm text-gray-700 dark:text-gray-300 text-right font-mono" role="cell">
                     {formatVolume(opportunity.volumeAvailable)}
                   </div>
                 </div>
@@ -382,11 +408,11 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
       </div>
 
       {/* Footer with Row Count and Sort Info */}
-      <div className="border-t border-gray-700 bg-gray-900 px-4 py-2 flex justify-between items-center">
-        <p className="text-xs text-gray-400">
+      <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-2 flex justify-between items-center">
+        <p className="text-xs text-gray-600 dark:text-gray-400">
           Showing {sortedData.length.toLocaleString()} opportunities
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-500">
           Sorted by {sortColumn} ({sortDirection})
         </p>
       </div>

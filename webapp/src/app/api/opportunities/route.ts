@@ -77,6 +77,7 @@ interface Opportunity {
   sellStation: string;
   roi: number;
   volumeAvailable: number;
+  maxProfit: number;
 }
 
 async function calculateOpportunities(
@@ -156,6 +157,8 @@ async function calculateOpportunities(
     const sellPrice = sellData.price;
     const profitPerUnit = sellPrice - buyPrice;
     const roi = (profitPerUnit / buyPrice) * 100;
+    const volumeAvailable = Math.min(buyData.volume, sellData.volume);
+    const maxProfit = profitPerUnit * volumeAvailable;
 
     // Only include profitable opportunities with valid data
     if (roi > 0 && buyPrice > 0 && sellPrice > 0 && isFinite(roi)) {
@@ -168,7 +171,8 @@ async function calculateOpportunities(
         buyLocationId: buyData.location,
         sellLocationId: sellData.location,
         roi: Math.round(roi * 100) / 100, // Round to 2 decimals
-        volumeAvailable: Math.min(buyData.volume, sellData.volume),
+        volumeAvailable,
+        maxProfit: Math.round(maxProfit * 100) / 100, // Round to 2 decimals
       });
     }
   });
@@ -204,6 +208,7 @@ async function calculateOpportunities(
     sellStation: locationNames.get(opp.sellLocationId) || `Station ${opp.sellLocationId}`,
     roi: opp.roi,
     volumeAvailable: opp.volumeAvailable,
+    maxProfit: opp.maxProfit,
   }));
 
   return finalOpportunities;
