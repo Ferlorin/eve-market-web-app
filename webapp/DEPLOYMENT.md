@@ -21,7 +21,7 @@ The application now automatically seeds EVE region names on deployment.
 3. **Deployment Flow**:
    ```
    Vercel: Deploy → Migrations → Build App → Start
-   GitHub Actions: Seed Regions → Fetch Market Data (chunks)
+   GitHub Actions: Migrations → Fetch Market Data (parallel) → Seed Region Names
    ```
 
 ### Vercel Deployment
@@ -106,19 +106,31 @@ npx prisma db seed
 
 ### GitHub Actions
 
-The `fetch-market-data.yml` workflow handles region seeding automatically:
+The `fetch-market-data.yml` workflow structure:
 
-**Workflow Structure:**
-1. **seed-regions** job (runs first):
-   - Checks if regions exist in database
-   - Seeds all EVE region names from ESI API
+**Workflow Execution Order:**
+1. **migrate** job (runs first):
+   - Runs database migrations
+   - Creates/updates tables
+   - Takes ~30 seconds
+
+2. **fetch-high-volume** and **fetch-data** jobs (run in parallel):
+   - Wait for migrate to complete
+   - Fetch market orders from ESI API
+   - Store regionId as numbers (no FK constraint)
+   - Take ~10-15 minutes
+
+3. **seed-regions** job (runs last):
+   - Waits for all fetch jobs to complete
+   - Fetches region names from ESI API
+   - Updates/inserts region names in database
    - Idempotent - safe to run multiple times
    - Takes ~1-2 minutes
 
-2. **fetch-high-volume** and **fetch-data** jobs:
-   - Wait for seed-regions to complete (`needs: seed-regions`)
-   - Run in parallel to fetch market data
-   - Have region names available for queries
+**Why this order?**
+- Migrations must run first (create tables)
+- Market data doesn't need region names (just stores IDs)
+- Seeding last ensures names stay current if ESI updates them
 
 **Environment Variables Required:**
 - `DATABASE_URL` - Set in repository secrets
