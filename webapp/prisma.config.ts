@@ -11,6 +11,7 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
-    shadowDatabaseUrl: process.env["DIRECT_DATABASE_URL"],
+    // shadowDatabaseUrl not needed for CockroachDB with db push
+    // shadowDatabaseUrl: process.env["DIRECT_DATABASE_URL"],
   },
 });
