@@ -62,12 +62,14 @@ export async function getDatabaseStats() {
       (regionCount * 100)
     ) / (1024 * 1024);
     
+    const freeTierLimitMB = 10 * 1024; // CockroachDB free tier: 10GB
+
     return {
       orderCount,
       regionCount,
       estimatedSizeMB,
-      freeTierLimitMB: 512,
-      usagePercent: (estimatedSizeMB / 512) * 100
+      freeTierLimitMB,
+      usagePercent: (estimatedSizeMB / freeTierLimitMB) * 100
     };
   } catch (error) {
     const err = error as Error;

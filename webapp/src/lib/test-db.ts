@@ -6,9 +6,9 @@ async function testConnection() {
     await prisma.$connect();
     console.log('✅ Database connection successful');
 
-    // Query PostgreSQL version
+    // Query database version
     const result = await prisma.$queryRaw`SELECT version()`;
-    console.log('📊 PostgreSQL version:', result);
+    console.log('📊 Database version:', result);
 
     await prisma.$disconnect();
   } catch (error) {
