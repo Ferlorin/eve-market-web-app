@@ -506,7 +506,11 @@ Users can then download the release and follow the setup guide to run the app lo
 
 ## License
 
-[Your License Here]
+This project is licensed under a **Non-Commercial Open Source License**.
+
+**TL;DR:** Free for personal, educational, and research use. Commercial use requires a separate license.
+
+See [LICENSE](LICENSE) for full details.
 
 ## Support
 
