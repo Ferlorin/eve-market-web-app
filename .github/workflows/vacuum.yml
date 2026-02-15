@@ -9,22 +9,24 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: webapp
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma client
+        working-directory: webapp
+        run: npx prisma generate
+
       - name: Run VACUUM ANALYZE on market_orders
-        run: |
-          response=$(curl -s -w "\n%{http_code}" \
-            -X GET \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.DEPLOYMENT_URL }}/api/cron/vacuum")
-
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | head -n-1)
-
-          echo "HTTP Status: $http_code"
-          echo "Response: $body"
-
-          if [ "$http_code" -ne 200 ]; then
-            echo "::error::Vacuum job failed with status $http_code"
-            exit 1
-          fi
-
-          echo "✓ VACUUM ANALYZE completed successfully"
+        working-directory: webapp
+        run: npx tsx -e "import { prisma } from './src/lib/db.ts'; await prisma.\$executeRawUnsafe('VACUUM ANALYZE market_orders'); console.log('✓ VACUUM ANALYZE completed successfully'); await prisma.\$disconnect();"
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
