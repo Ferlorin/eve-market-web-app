@@ -174,7 +174,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
         role="rowgroup"
       >
         <div
-          className="grid grid-cols-10 gap-4 px-4 py-3"
+          className="grid grid-cols-9 gap-4 px-4 py-3"
           role="row"
         >
           <button
@@ -253,21 +253,6 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           </button>
 
           <button
-            onClick={() => handleSort('profitPerUnit')}
-            className={`${headerButtonClass('profitPerUnit')} text-right font-mono`}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'profitPerUnit'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
-            Profit/Unit <SortIcon column="profitPerUnit" />
-          </button>
-
-          <button
             onClick={() => handleSort('roi')}
             className={`${headerButtonClass('roi')} text-right font-mono`}
             role="columnheader"
@@ -294,7 +279,22 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
                 : 'none'
             }
           >
-            Quantity <SortIcon column="volumeAvailable" />
+            Volume <SortIcon column="volumeAvailable" />
+          </button>
+
+          <button
+            onClick={() => handleSort('profitPerUnit')}
+            className={`${headerButtonClass('profitPerUnit')} text-right font-mono`}
+            role="columnheader"
+            aria-sort={
+              sortColumn === 'profitPerUnit'
+                ? sortDirection === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none'
+            }
+          >
+            Profit/Unit <SortIcon column="profitPerUnit" />
           </button>
 
           <button
@@ -311,13 +311,6 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           >
             Max Profit <SortIcon column="maxProfit" />
           </button>
-
-          <div 
-            className="text-right text-xs font-semibold theme-text-secondary uppercase tracking-wider font-mono"
-            role="columnheader"
-          >
-            Volume
-          </div>
         </div>
       </div>
 
@@ -350,7 +343,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
                 }}
                 role="row"
               >
-                <div className="grid grid-cols-10 gap-4 px-4 py-2 items-center h-full min-w-0 [&>div]:min-w-0">
+                <div className="grid grid-cols-9 gap-4 px-4 py-2 items-center h-full min-w-0 [&>div]:min-w-0">
                   {/* Item Name */}
                   <div className="text-sm theme-text-primary truncate" role="cell" title={opportunity.itemName}>
                     {opportunity.itemName}
@@ -376,29 +369,24 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
                     {formatPrice(opportunity.sellPrice)}
                   </div>
 
-                  {/* Profit Per Unit */}
-                  <div className="text-sm theme-text-success text-right font-mono font-semibold" role="cell">
-                    {formatPrice(opportunity.profitPerUnit)}
-                  </div>
-
                   {/* ROI % */}
                   <div className="text-sm text-eve-blue text-right font-mono font-semibold" role="cell">
                     {formatROI(opportunity.roi)}
                   </div>
 
-                  {/* Quantity */}
+                  {/* Volume */}
                   <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
-                    {opportunity.volumeAvailable.toLocaleString()}
+                    {formatVolume(opportunity.volumeAvailable)}
+                  </div>
+
+                  {/* Profit Per Unit */}
+                  <div className="text-sm theme-text-success text-right font-mono font-semibold" role="cell">
+                    {formatPrice(opportunity.profitPerUnit)}
                   </div>
 
                   {/* Max Profit */}
                   <div className="text-sm theme-text-success-bold text-right font-mono font-bold" role="cell">
                     {formatPrice(opportunity.maxProfit)}
-                  </div>
-
-                  {/* Volume (M3) */}
-                  <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
-                    {formatVolume(opportunity.volumeAvailable)}
                   </div>
                 </div>
               </div>
