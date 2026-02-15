@@ -98,7 +98,7 @@ npx prisma generate
 npx prisma migrate deploy
 ```
 
-Optionally, seed the database with initial region data:
+**Note:** Region names will be automatically seeded when you run the GitHub Action to fetch market data. For local development, you can manually seed:
 
 ```bash
 npx prisma db seed
