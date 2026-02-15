@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "cockroachdb"
+  provider = "postgresql"
 }
 
 // EVE Online Region Data
