@@ -6,7 +6,6 @@ async function checkRegions() {
   try {
     const regions = await prisma.region.findMany({
       select: {
-        id: true,
         regionId: true,
         name: true,
       },
