@@ -1,0 +1,221 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create release bundle
+        run: |
+          # Create release directory
+          mkdir -p release/eve-market-scanner
+          
+          # Copy essential files
+          cp -r webapp release/eve-market-scanner/
+          cp docker-compose.yml release/eve-market-scanner/
+          cp README.md release/eve-market-scanner/
+          
+          # Copy docs
+          mkdir -p release/eve-market-scanner/docs
+          cp docs/*.md release/eve-market-scanner/docs/
+          
+          # Create local setup guide
+          cat > release/eve-market-scanner/LOCAL_SETUP.md << 'EOF'
+          # EVE Market Scanner - Local Setup Guide
+          
+          ## Prerequisites
+          
+          - [Node.js](https://nodejs.org/) v20 or higher
+          - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for PostgreSQL)
+          - Git (optional, for cloning)
+          
+          ## Quick Start
+          
+          ### 1. Start PostgreSQL Database
+          
+          ```bash
+          docker-compose up -d
+          ```
+          
+          This starts a PostgreSQL container on port 5432.
+          
+          ### 2. Set Up Environment Variables
+          
+          Create `webapp/.env.local`:
+          
+          ```env
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/eve_market?schema=public"
+          ```
+          
+          ### 3. Install Dependencies
+          
+          ```bash
+          cd webapp
+          npm install
+          ```
+          
+          ### 4. Set Up Database Schema
+          
+          ```bash
+          npx prisma migrate deploy
+          npx prisma generate
+          ```
+          
+          ### 5. Seed Region Data
+          
+          ```bash
+          npx prisma db seed
+          ```
+          
+          ### 6. Fetch Market Data (Optional)
+          
+          To populate with live market data from EVE Online ESI API:
+          
+          ```bash
+          # Fetch all regions (takes ~15 minutes, uses ~2GB RAM)
+          npm run fetch-data
+          
+          # OR fetch specific regions only
+          SPECIFIC_REGIONS="10000002,10000043" npm run fetch-data
+          ```
+          
+          ### 7. Start Development Server
+          
+          ```bash
+          npm run dev
+          ```
+          
+          Open [http://localhost:3000](http://localhost:3000) in your browser.
+          
+          ## Production Build
+          
+          ```bash
+          npm run build
+          npm run start
+          ```
+          
+          ## Scheduled Data Updates
+          
+          For automated 30-minute data refreshes, run:
+          
+          ```bash
+          npm run dev-cron
+          ```
+          
+          This starts a background process that fetches data every 30 minutes.
+          
+          ## Database Management
+          
+          ### View Data with Prisma Studio
+          
+          ```bash
+          npx prisma studio
+          ```
+          
+          ### Check Database Size
+          
+          ```bash
+          npm run db-size
+          ```
+          
+          ### Clean Old Data
+          
+          ```bash
+          npm run cleanup
+          ```
+          
+          ## Troubleshooting
+          
+          ### Port 5432 Already in Use
+          
+          If you have another PostgreSQL instance running:
+          - Stop it, OR
+          - Edit `docker-compose.yml` to use a different port (e.g., `5433:5432`)
+          - Update `DATABASE_URL` accordingly
+          
+          ### Out of Memory During Data Fetch
+          
+          The fetch script is memory-intensive. Use chunked fetching:
+          
+          ```bash
+          # Fetch in 4 chunks (one at a time)
+          CHUNK_INDEX=0 TOTAL_CHUNKS=4 npm run fetch-data
+          CHUNK_INDEX=1 TOTAL_CHUNKS=4 npm run fetch-data
+          CHUNK_INDEX=2 TOTAL_CHUNKS=4 npm run fetch-data
+          CHUNK_INDEX=3 TOTAL_CHUNKS=4 npm run fetch-data
+          ```
+          
+          ## Support
+          
+          For issues, please visit: https://github.com/YOUR_USERNAME/eve-market-web-app/issues
+          EOF
+          
+          # Remove node_modules and build artifacts to reduce size
+          find release/eve-market-scanner/webapp -type d -name "node_modules" -prune -exec rm -rf {} +
+          find release/eve-market-scanner/webapp -type d -name ".next" -prune -exec rm -rf {} +
+          find release/eve-market-scanner/webapp -type d -name "dist" -prune -exec rm -rf {} +
+          
+          # Create archive
+          cd release
+          tar -czf eve-market-scanner-${{ inputs.version }}.tar.gz eve-market-scanner/
+          zip -r eve-market-scanner-${{ inputs.version }}.zip eve-market-scanner/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ inputs.version }}
+          name: EVE Market Scanner ${{ inputs.version }}
+          body: |
+            ## EVE Market Scanner ${{ inputs.version }}
+            
+            A web application for analyzing arbitrage opportunities in EVE Online's regional markets.
+            
+            ### 📦 Downloads
+            
+            - **eve-market-scanner-${{ inputs.version }}.tar.gz** - Linux/macOS
+            - **eve-market-scanner-${{ inputs.version }}.zip** - Windows
+            
+            ### 🚀 Quick Start
+            
+            1. Download and extract the archive
+            2. Follow instructions in `LOCAL_SETUP.md`
+            3. Requires Docker Desktop and Node.js v20+
+            
+            ### ✨ Features
+            
+            - Real-time market data from EVE Online ESI API
+            - ROI calculation for station trading and hauling
+            - Region-to-region arbitrage opportunities
+            - Auto-refresh every 30 minutes
+            - Dark/Light theme support
+            - Full keyboard navigation
+            
+            ### 📚 Documentation
+            
+            See `docs/` folder for architecture and requirements.
+            
+            ### 🐛 Support
+            
+            Report issues at: https://github.com/${{ github.repository }}/issues
+          draft: false
+          prerelease: ${{ inputs.prerelease }}
+          files: |
+            release/eve-market-scanner-${{ inputs.version }}.tar.gz
+            release/eve-market-scanner-${{ inputs.version }}.zip

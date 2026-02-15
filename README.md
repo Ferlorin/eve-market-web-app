@@ -17,6 +17,17 @@ The EVE Market Web App helps traders identify arbitrage opportunities by compari
 - ♿ **Accessibility** - WCAG AA compliant with ARIA support
 - 📱 **Responsive Design** - Desktop-optimized layout (minimum 1280px width)
 
+## Quick Download & Run
+
+**Want to run locally without setting up from source?** Download a pre-built release:
+
+1. Go to [Releases](../../releases)
+2. Download the latest `.zip` (Windows) or `.tar.gz` (Linux/macOS)
+3. Extract and follow the included `LOCAL_SETUP.md` guide
+4. Requires: Docker Desktop + Node.js v20+
+
+This is the fastest way to get started - no git cloning or manual configuration needed!
+
 ## Technology Stack
 
 - **Framework:** Next.js 16.1.6 (App Router, Turbopack)
@@ -473,6 +484,25 @@ For production deployment instructions, please contact the **DevOps/Platform Eng
 5. Commit changes: `git commit -m "Add your feature"`
 6. Push to branch: `git push origin feature/your-feature`
 7. Create a Pull Request
+
+## Creating Releases
+
+To create a downloadable release for users to run locally:
+
+1. Go to **Actions** → **Create Release** in GitHub
+2. Click **Run workflow**
+3. Enter version (e.g., `v1.0.0`)
+4. Choose whether to mark as pre-release
+5. Click **Run workflow**
+
+The workflow will:
+- Create `.tar.gz` (Linux/macOS) and `.zip` (Windows) archives
+- Include all source code and dependencies
+- Generate a `LOCAL_SETUP.md` with installation instructions
+- Create a GitHub release with download links
+- Exclude unnecessary files (`node_modules`, build artifacts)
+
+Users can then download the release and follow the setup guide to run the app locally with Docker + Node.js.
 
 ## License
 
