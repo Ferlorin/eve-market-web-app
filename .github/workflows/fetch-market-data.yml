@@ -30,7 +30,7 @@ jobs:
 
       - name: Run database migrations
         working-directory: webapp
-        run: npx prisma migrate deploy
+        run: npm run migrate
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           DIRECT_DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}
