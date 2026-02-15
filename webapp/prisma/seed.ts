@@ -5,13 +5,15 @@ import axios from 'axios';
 
 const { Pool } = pg;
 
-// Create PostgreSQL connection pool
+// Create PostgreSQL connection pool from DATABASE_URL environment variable
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is not set');
+}
+
 const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  user: 'postgres',
-  password: 'postgres',
-  database: 'eve_market',
+  connectionString,
 });
 
 const adapter = new PrismaPg(pool);
