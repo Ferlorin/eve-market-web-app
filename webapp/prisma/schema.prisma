@@ -10,30 +10,28 @@ datasource db {
 
 // EVE Online Region Data
 model Region {
-  id             Int       @id @default(autoincrement())
-  regionId       Int       @unique // ESI API region ID (e.g., 10000002 for The Forge)
+  regionId       Int       @id // ESI API region ID (e.g., 10000002 for The Forge)
   name           String    // Human-readable region name (e.g., "The Forge")
   lastFetchedAt  DateTime? // Timestamp of last successful market data fetch
-  
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  
+
   @@map("regions")
 }
 
 // Market Order Data from ESI API
 model MarketOrder {
-  id            Int      @id @default(autoincrement())
+  orderId       BigInt   @id // ESI API order ID (globally unique)
   regionId      Int      // FK to region (not enforced - regions can be added dynamically)
   typeId        Int      // EVE item type ID
-  orderId       BigInt   @unique // ESI API order ID (globally unique)
   price         Decimal  @db.Decimal(20, 2) // Order price (ISK)
   volumeRemain  Int      // Quantity still available
   locationId    BigInt   // Station/structure ID where order is placed
   isBuyOrder    Boolean  // true = buy order, false = sell order
   issued        DateTime // When the order was created
   fetchedAt     DateTime // When we fetched this data from ESI
-  
+
   // Composite index for ROI query performance (NFR-P7: <500ms server-side)
   @@index([regionId, typeId])
   @@map("market_orders")
@@ -41,8 +39,7 @@ model MarketOrder {
 
 // Item Type Cache (EVE item names from ESI)
 model ItemType {
-  id        Int      @id @default(autoincrement())
-  typeId    Int      @unique // ESI type ID
+  typeId    Int      @id // ESI type ID
   name      String   // Human-readable item name
   fetchedAt DateTime @default(now())
 
@@ -51,12 +48,11 @@ model ItemType {
 
 // Location Cache (Stations and Structures)
 model Location {
-  id         Int      @id @default(autoincrement())
-  locationId BigInt   @unique // ESI location ID (station or structure)
+  locationId BigInt   @id // ESI location ID (station or structure)
   name       String   // Human-readable name
   type       String   // "station" or "structure"
   fetchedAt  DateTime @default(now()) // When we cached this name
-  
+
   @@map("locations")
 }
 

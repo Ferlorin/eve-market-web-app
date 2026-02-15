@@ -163,10 +163,10 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // Delete existing orders for this region first
-      const deleteResult = await prisma.marketOrder.deleteMany({
-        where: { regionId }
-      });
+      // Delete existing orders for this region - use raw DELETE for better performance
+      const deleteResult = await prisma.$executeRawUnsafe(`
+        DELETE FROM market_orders WHERE "regionId" = ${regionId}
+      `);
 
       // Stream pages directly to DB — never accumulate all orders in memory
       let totalInserted = 0;
@@ -184,7 +184,7 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
 
         hasMorePages = page < totalPages;
         page++;
-        
+
         // Force GC every 5 pages to prevent accumulation
         if (page % 5 === 0 && global.gc) {
           global.gc();
@@ -209,14 +209,14 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
       logger.info({
         event: 'region_fetched',
         regionId,
-        ordersDeleted: deleteResult.count,
+        ordersDeleted: deleteResult,
         ordersInserted: totalInserted,
         pages: page - 1,
         attempt: attempt + 1,
         cacheInvalidated: true,
         memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
       });
-      
+
       return; // Success
     } catch (error) {
       lastError = error as Error;

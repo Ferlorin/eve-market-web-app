@@ -1,3 +1,8 @@
 {
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/cron/vacuum",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }
