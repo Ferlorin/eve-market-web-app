@@ -76,6 +76,39 @@ body {
   color: var(--color-gray-400);
 }
 
+.theme-text-success {
+  color: #10b981;
+}
+
+.theme-text-success-bold {
+  color: #16a34a;
+}
+
+.theme-row-even {
+  background-color: var(--color-gray-800);
+}
+
+.theme-row-odd {
+  background-color: var(--color-gray-900);
+}
+
+/* Light theme overrides for table */
+.light .theme-text-success {
+  color: #16a34a;
+}
+
+.light .theme-text-success-bold {
+  color: #15803d;
+}
+
+.light .theme-row-even {
+  background-color: #ffffff;
+}
+
+.light .theme-row-odd {
+  background-color: #f9fafb;
+}
+
 /* Custom scrollbar for region dropdown */
 .scrollbar-thin::-webkit-scrollbar {
   width: 8px;

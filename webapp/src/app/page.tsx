@@ -149,31 +149,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Selection Summary */}
-          {buyMarket && sellMarket && !validationError && (
-            <div className="mt-4 p-4 rounded-lg theme-bg-secondary theme-border border">
-              <p className="text-sm theme-text-secondary mb-2">
-                Comparing opportunities:
-              </p>
-              <div className="flex items-center gap-4 theme-text-primary">
-                <span className="font-medium">{buyMarket.name}</span>
-                <svg
-                  className="h-5 w-5 text-eve-blue"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-                <span className="font-medium">{sellMarket.name}</span>
-              </div>
-            </div>
-          )}
         </section>
 
         {/* Opportunities Table */}

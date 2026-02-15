@@ -149,14 +149,14 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
 
   const headerButtonClass = (column: SortColumn) =>
     `w-full text-left px-0 py-0 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer
-    ${sortColumn === column ? 'text-eve-blue' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'}
+    ${sortColumn === column ? 'text-eve-blue' : 'theme-text-secondary hover:theme-text-primary'}
     focus:outline-none focus-visible:ring-2 focus-visible:ring-eve-blue rounded`;
 
   if (data.length === 0) {
     return (
-      <div className="w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="w-full overflow-hidden rounded-lg border theme-border theme-bg-secondary">
         <div className="p-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400">No opportunities found</p>
+          <p className="theme-text-secondary">No opportunities found</p>
         </div>
       </div>
     );
@@ -164,13 +164,13 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
 
   return (
     <div 
-      className="w-full overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+      className="w-full overflow-hidden rounded-lg border theme-border theme-bg-secondary"
       role="table"
       aria-label="Trading opportunities"
     >
       {/* Fixed Table Header with Sortable Columns */}
       <div 
-        className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900"
+        className="border-b theme-border theme-bg-primary"
         role="rowgroup"
       >
         <div
@@ -313,7 +313,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           </button>
 
           <div 
-            className="text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider font-mono"
+            className="text-right text-xs font-semibold theme-text-secondary uppercase tracking-wider font-mono"
             role="columnheader"
           >
             Volume
@@ -324,7 +324,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
       {/* Scrollable Table Body with Virtual Scrolling */}
       <div
         ref={parentRef}
-        className="h-[600px] overflow-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800"
+        className="h-[600px] overflow-auto scrollbar-thin"
         role="rowgroup"
       >
         <div
@@ -342,7 +342,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
               <div
                 key={virtualRow.key}
                 className={`absolute top-0 left-0 w-full ${
-                  isEven ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-850'
+                  isEven ? 'theme-row-even' : 'theme-row-odd'
                 }`}
                 style={{
                   height: `${virtualRow.size}px`,
@@ -352,32 +352,32 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
               >
                 <div className="grid grid-cols-10 gap-4 px-4 py-2 items-center h-full min-w-0 [&>div]:min-w-0">
                   {/* Item Name */}
-                  <div className="text-sm text-gray-900 dark:text-white truncate" role="cell" title={opportunity.itemName}>
+                  <div className="text-sm theme-text-primary truncate" role="cell" title={opportunity.itemName}>
                     {opportunity.itemName}
                   </div>
 
                   {/* Buy Station */}
-                  <div className="text-sm text-gray-700 dark:text-gray-300 text-center truncate" role="cell" title={opportunity.buyStation}>
+                  <div className="text-sm theme-text-secondary text-center truncate" role="cell" title={opportunity.buyStation}>
                     {opportunity.buyStation}
                   </div>
 
                   {/* Sell Station */}
-                  <div className="text-sm text-gray-700 dark:text-gray-300 text-center truncate" role="cell" title={opportunity.sellStation}>
+                  <div className="text-sm theme-text-secondary text-center truncate" role="cell" title={opportunity.sellStation}>
                     {opportunity.sellStation}
                   </div>
 
                   {/* Buy Price */}
-                  <div className="text-sm text-gray-700 dark:text-gray-300 text-right font-mono" role="cell">
+                  <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
                     {formatPrice(opportunity.buyPrice)}
                   </div>
 
                   {/* Sell Price */}
-                  <div className="text-sm text-gray-700 dark:text-gray-300 text-right font-mono" role="cell">
+                  <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
                     {formatPrice(opportunity.sellPrice)}
                   </div>
 
                   {/* Profit Per Unit */}
-                  <div className="text-sm text-green-400 text-right font-mono font-semibold" role="cell">
+                  <div className="text-sm theme-text-success text-right font-mono font-semibold" role="cell">
                     {formatPrice(opportunity.profitPerUnit)}
                   </div>
 
@@ -387,17 +387,17 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
                   </div>
 
                   {/* Quantity */}
-                  <div className="text-sm text-gray-700 dark:text-gray-300 text-right font-mono" role="cell">
+                  <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
                     {opportunity.volumeAvailable.toLocaleString()}
                   </div>
 
                   {/* Max Profit */}
-                  <div className="text-sm text-green-500 dark:text-green-400 text-right font-mono font-bold" role="cell">
+                  <div className="text-sm theme-text-success-bold text-right font-mono font-bold" role="cell">
                     {formatPrice(opportunity.maxProfit)}
                   </div>
 
                   {/* Volume (M3) */}
-                  <div className="text-sm text-gray-700 dark:text-gray-300 text-right font-mono" role="cell">
+                  <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
                     {formatVolume(opportunity.volumeAvailable)}
                   </div>
                 </div>
@@ -408,11 +408,11 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
       </div>
 
       {/* Footer with Row Count and Sort Info */}
-      <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-2 flex justify-between items-center">
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+      <div className="border-t theme-border theme-bg-primary px-4 py-2 flex justify-between items-center">
+        <p className="text-xs theme-text-secondary">
           Showing {sortedData.length.toLocaleString()} opportunities
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-500">
+        <p className="text-xs theme-text-secondary">
           Sorted by {sortColumn} ({sortDirection})
         </p>
       </div>
