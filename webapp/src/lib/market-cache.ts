@@ -91,6 +91,11 @@ class MarketCache {
     }
   }
 
+  getEntry(key: string): { fetchedAt: Date } | null {
+    const entry = this.cache.get(key);
+    return entry ? { fetchedAt: entry.fetchedAt } : null;
+  }
+
   stats() {
     return {
       entries: this.cache.size,
