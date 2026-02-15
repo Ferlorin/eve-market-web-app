@@ -1,0 +1,30 @@
+name: Database Vacuum
+
+on:
+  workflow_dispatch:
+
+jobs:
+  vacuum:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Run VACUUM ANALYZE on market_orders
+        run: |
+          response=$(curl -s -w "\n%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.DEPLOYMENT_URL }}/api/cron/vacuum")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+
+          if [ "$http_code" -ne 200 ]; then
+            echo "::error::Vacuum job failed with status $http_code"
+            exit 1
+          fi
+
+          echo "✓ VACUUM ANALYZE completed successfully"
