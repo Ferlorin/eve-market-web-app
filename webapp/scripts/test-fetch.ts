@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { fetchAllRegions } from '../src/jobs/fetch-market-data';
 
 async function main() {
