@@ -576,6 +576,21 @@ async function fetchWithRetry(url: string, maxRetries = 3): Promise<any> {
 
 #### Opportunities Data Grid
 
+**Table Controls:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Trading Opportunities                                       │
+│  Min Max Profit [_____]×  Min ROI [____%]×  [↻ Refresh]   │
+├─────────────────────────────────────────────────────────────┤
+```
+
+**Filter Controls:**
+- **Min Max Profit Filter:** Number input, threshold-based (≥ value)
+- **Min ROI Filter:** Percentage input, threshold-based (≥ value)
+- **Refresh Button:** Manual data refetch with loading state
+- **Filter Behavior:** AND logic, debounced 300ms, client-side
+- **Filter State:** Persists during refresh, resets on region change
+
 **Column Configuration:**
 
 | Column | Width | Sortable | Format | Default Sort |
@@ -881,6 +896,9 @@ All packages are MIT/Apache licensed and free to use:
 | 2026-02-13 | TanStack Table over custom grid | Battle-tested, sorting/pagination built-in |
 | 2026-02-13 | Manual refresh over auto-polling | Simpler PoC, respects ESI rate limits |
 | 2026-02-13 | Dark theme only | EVE player expectations, reduce scope |
+| 2026-02-16 | Add refresh button + client-side filters | UX: Inline filters for fast workflow. Arch: Local state, debounced 300ms, queryClient.invalidateQueries for refresh |
+| 2026-02-16 | Filters persist during refresh, reset on region change | UX: Intentional refresh keeps context. Arch: Different markets = different profit ranges |
+| 2026-02-16 | Two-stage filter→sort pipeline | Arch: Filter before sort maintains correct ordering, works with virtual scrolling |
 
 ---
 
