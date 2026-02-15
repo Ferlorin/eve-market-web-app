@@ -13,29 +13,29 @@
 */
 -- AlterTable: market_orders
 -- Drop existing primary key and unique constraint on orderId
-ALTER TABLE "market_orders" DROP CONSTRAINT "market_orders_pkey";
-ALTER TABLE "market_orders" DROP CONSTRAINT "market_orders_orderId_key";
+ALTER TABLE "market_orders" DROP CONSTRAINT IF EXISTS "market_orders_pkey";
+ALTER TABLE "market_orders" DROP CONSTRAINT IF EXISTS "market_orders_orderId_key";
 
 -- Drop the redundant id column
-ALTER TABLE "market_orders" DROP COLUMN "id";
+ALTER TABLE "market_orders" DROP COLUMN IF EXISTS "id";
 
 -- Make orderId the primary key
 ALTER TABLE "market_orders" ADD CONSTRAINT "market_orders_pkey" PRIMARY KEY ("orderId");
 
 -- AlterTable: locations
-ALTER TABLE "locations" DROP CONSTRAINT "locations_pkey";
-ALTER TABLE "locations" DROP CONSTRAINT "locations_locationId_key";
-ALTER TABLE "locations" DROP COLUMN "id";
+ALTER TABLE "locations" DROP CONSTRAINT IF EXISTS "locations_pkey";
+ALTER TABLE "locations" DROP CONSTRAINT IF EXISTS "locations_locationId_key";
+ALTER TABLE "locations" DROP COLUMN IF EXISTS "id";
 ALTER TABLE "locations" ADD CONSTRAINT "locations_pkey" PRIMARY KEY ("locationId");
 
 -- AlterTable: item_types
-ALTER TABLE "item_types" DROP CONSTRAINT "item_types_pkey";
-ALTER TABLE "item_types" DROP CONSTRAINT "item_types_typeId_key";
-ALTER TABLE "item_types" DROP COLUMN "id";
+ALTER TABLE "item_types" DROP CONSTRAINT IF EXISTS "item_types_pkey";
+ALTER TABLE "item_types" DROP CONSTRAINT IF EXISTS "item_types_typeId_key";
+ALTER TABLE "item_types" DROP COLUMN IF EXISTS "id";
 ALTER TABLE "item_types" ADD CONSTRAINT "item_types_pkey" PRIMARY KEY ("typeId");
 
 -- AlterTable: regions
-ALTER TABLE "regions" DROP CONSTRAINT "regions_pkey";
-ALTER TABLE "regions" DROP CONSTRAINT "regions_regionId_key";
-ALTER TABLE "regions" DROP COLUMN "id";
+ALTER TABLE "regions" DROP CONSTRAINT IF EXISTS "regions_pkey";
+ALTER TABLE "regions" DROP CONSTRAINT IF EXISTS "regions_regionId_key";
+ALTER TABLE "regions" DROP COLUMN IF EXISTS "id";
 ALTER TABLE "regions" ADD CONSTRAINT "regions_pkey" PRIMARY KEY ("regionId");
