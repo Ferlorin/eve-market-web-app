@@ -57,11 +57,25 @@ jobs:
           This starts a PostgreSQL container on port 5432.
           
           ### 2. Set Up Environment Variables
-          
-          Create `webapp/.env.local`:
-          
+
+          Create `webapp/.env`:
+
           ```env
-          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/eve_market?schema=public"
+          # For local PostgreSQL (using docker-compose)
+          NEON_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/eve_market?schema=public"
+          NEON_DIRECT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/eve_market?schema=public"
+          ```
+
+          **Alternative: Use Neon Serverless PostgreSQL**
+
+          Instead of docker-compose, you can use a free Neon account:
+          1. Sign up at [https://neon.tech](https://neon.tech)
+          2. Create a new project
+          3. Copy the connection strings to `.env`:
+
+          ```env
+          NEON_DATABASE_URL="postgresql://user:password@host-pooler.region.neon.tech/dbname?sslmode=require"
+          NEON_DIRECT_DATABASE_URL="postgresql://user:password@host.region.neon.tech/dbname?sslmode=require"
           ```
           
           ### 3. Install Dependencies
@@ -163,8 +177,8 @@ jobs:
           ```
           
           ## Support
-          
-          For issues, please visit: https://github.com/YOUR_USERNAME/eve-market-web-app/issues
+
+          For issues, please visit: https://github.com/${{ github.repository }}/issues
           EOF
           
           # Remove node_modules and build artifacts to reduce size
