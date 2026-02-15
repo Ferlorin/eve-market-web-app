@@ -9,7 +9,7 @@ The application now automatically seeds EVE region names on deployment.
 1. **Build Process** (`package.json`):
    ```bash
    npm run build
-   # Runs: prisma migrate deploy && prisma db seed && next build
+   # Runs: prisma migrate deploy && next build
    ```
 
 2. **Smart Seeding** (`prisma/seed.ts`):
@@ -20,7 +20,8 @@ The application now automatically seeds EVE region names on deployment.
 
 3. **Deployment Flow**:
    ```
-   Deploy → Migrations → Seed Regions → Build App → Start
+   Vercel: Deploy → Migrations → Build App → Start
+   GitHub Actions: Seed Regions → Fetch Market Data (chunks)
    ```
 
 ### Vercel Deployment
@@ -32,18 +33,26 @@ When deploying to Vercel with Neon database:
    DATABASE_URL=postgresql://user:password@host/database?sslmode=require
    ```
 
-2. **Automatic Seeding**:
-   - Runs during `vercel build` or `npm run build`
-   - Skips seeding if regions already populated
-   - Takes ~1-2 minutes on first deploy
+2. **Build Process**:
+   - Runs migrations during build (`prisma migrate deploy`)
+   - Does NOT seed regions during build (prevents timeout issues)
+   - Takes 1-2 minutes to build
 
-3. **Manual Seeding** (if needed):
+3. **Initial Seeding** (required for first deploy):
    ```bash
-   # In Vercel CLI or local environment with production DATABASE_URL
-   npm run build  # Includes seed step
-   # or
+   # After first deploy, manually seed regions:
+   npx prisma db seed
+   # or use Vercel CLI:
+   vercel env pull .env.production
+   npm run build  # This will fail if regions aren't seeded yet
+   # So run seed separately:
    npx prisma db seed
    ```
+
+4. **GitHub Actions Handles Seeding**:
+   - The `fetch-market-data.yml` workflow seeds regions automatically
+   - Runs on first execution before fetching market data
+   - No manual intervention needed after first action run
 
 ### Local Development
 
@@ -97,7 +106,29 @@ npx prisma db seed
 
 ### GitHub Actions
 
-The fetch-market-data workflow already has DATABASE_URL configured:
+The `fetch-market-data.yml` workflow handles region seeding automatically:
+
+**Workflow Structure:**
+1. **seed-regions** job (runs first):
+   - Checks if regions exist in database
+   - Seeds all EVE region names from ESI API
+   - Idempotent - safe to run multiple times
+   - Takes ~1-2 minutes
+
+2. **fetch-high-volume** and **fetch-data** jobs:
+   - Wait for seed-regions to complete (`needs: seed-regions`)
+   - Run in parallel to fetch market data
+   - Have region names available for queries
+
+**Environment Variables Required:**
+- `DATABASE_URL` - Set in repository secrets
+
+**Manual Trigger:**
+```bash
+# Use GitHub UI: Actions → Fetch Market Data → Run workflow
+# or via GitHub CLI:
+gh workflow run fetch-market-data.yml
+```
 ```yaml
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
