@@ -4,12 +4,12 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required');
+if (!process.env.NEON_DATABASE_URL) {
+  throw new Error('NEON_DATABASE_URL environment variable is required');
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.NEON_DATABASE_URL,
   max: process.env.VERCEL ? 5 : 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
