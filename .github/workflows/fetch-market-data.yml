@@ -32,8 +32,8 @@ jobs:
         working-directory: webapp
         run: npm run migrate
         env:
-          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-          DIRECT_DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          NEON_DIRECT_DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}
 
   # Dedicated jobs for high-volume regions (>100k orders)
   # These 4 regions contain 54.5% of all market data
@@ -73,7 +73,7 @@ jobs:
         working-directory: webapp
         run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-and-cleanup.ts
         env:
-          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           SPECIFIC_REGIONS: ${{ matrix.region.id }}
 
   # Normal chunks for remaining 109 regions (excluding high-volume regions)
@@ -109,6 +109,6 @@ jobs:
         working-directory: webapp
         run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-and-cleanup.ts
         env:
-          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           CHUNK_INDEX: ${{ matrix.chunk }}
           TOTAL_CHUNKS: 4
