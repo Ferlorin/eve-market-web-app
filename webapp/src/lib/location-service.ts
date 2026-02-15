@@ -37,7 +37,7 @@ export class LocationService {
    */
   async getLocationNames(locationIds: bigint[]): Promise<Map<bigint, string>> {
     const result = new Map<bigint, string>();
-    
+
     // Fetch all cached locations in one query
     const cached = await prisma.location.findMany({
       where: {
@@ -55,15 +55,34 @@ export class LocationService {
     // Find missing locations
     const missing = locationIds.filter((id) => !result.has(id));
 
-    // Fetch missing locations from ESI (in parallel with limit)
+    // Fetch missing locations from ESI (batched)
     if (missing.length > 0) {
-      const promises = missing.map((id) => this.fetchAndCacheLocation(id));
-      const fetched = await Promise.all(promises);
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < missing.length; i += BATCH_SIZE) {
+        const batch = missing.slice(i, i + BATCH_SIZE);
+        const promises = batch.map((id) => this.fetchLocationFromESI(id));
+        const fetched = await Promise.all(promises);
 
-      fetched.forEach((name, index) => {
-        const id = missing[index];
-        result.set(id, name || id.toString());
-      });
+        const toCreate: { locationId: bigint; name: string; type: string }[] = [];
+
+        fetched.forEach((data, index) => {
+          const id = batch[index];
+          if (data) {
+            result.set(id, data.name);
+            toCreate.push({ locationId: id, name: data.name, type: data.type });
+          } else {
+            result.set(id, id.toString());
+          }
+        });
+
+        // BATCH INSERT instead of individual creates
+        if (toCreate.length > 0) {
+          await prisma.location.createMany({
+            data: toCreate,
+            skipDuplicates: true,
+          });
+        }
+      }
     }
 
     return result;
@@ -74,6 +93,32 @@ export class LocationService {
    * Returns null if fetch fails
    */
   private async fetchAndCacheLocation(locationId: bigint): Promise<string | null> {
+    try {
+      const data = await this.fetchLocationFromESI(locationId);
+
+      if (data) {
+        await prisma.location.create({
+          data: {
+            locationId,
+            name: data.name,
+            type: data.type,
+          },
+        });
+        return data.name;
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`Failed to fetch location ${locationId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch location data from ESI without caching
+   * Returns location data or null if fetch fails
+   */
+  private async fetchLocationFromESI(locationId: bigint): Promise<{ name: string; type: string } | null> {
     try {
       // Determine if it's a station or structure by ID range
       // Stations: 60000000 - 64000000
@@ -93,18 +138,7 @@ export class LocationService {
         name = await esiClient.getStructureName(locationId);
       }
 
-      // Cache the result (even if null)
-      if (name) {
-        await prisma.location.create({
-          data: {
-            locationId,
-            name,
-            type,
-          },
-        });
-      }
-
-      return name;
+      return name ? { name, type } : null;
     } catch (error) {
       console.error(`Failed to fetch location ${locationId}:`, error);
       return null;
