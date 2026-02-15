@@ -6,6 +6,48 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Dedicated jobs for high-volume regions (>100k orders)
+  # These 4 regions contain 54.5% of all market data
+  # Processing them separately prevents bottlenecks in the chunk jobs
+  fetch-high-volume:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        region:
+          - { id: '10000002', name: 'The Forge', orders: '444k' }
+          - { id: '10000043', name: 'Domain', orders: '196k' }
+          - { id: '10000042', name: 'Metropolis', orders: '127k' }
+          - { id: '10000032', name: 'Sinq Laison', orders: '124k' }
+      fail-fast: false
+      max-parallel: 4
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: webapp
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma client
+        working-directory: webapp
+        run: npx prisma generate
+
+      - name: Fetch ${{ matrix.region.name }} (${{ matrix.region.orders }} orders)
+        working-directory: webapp
+        run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-and-cleanup.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SPECIFIC_REGIONS: ${{ matrix.region.id }}
+
+  # Normal chunks for remaining 109 regions (excluding high-volume regions)
+  # These are distributed across 4 parallel jobs
   fetch-data:
     runs-on: ubuntu-latest
     timeout-minutes: 15

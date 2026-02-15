@@ -67,6 +67,31 @@ async function seedRegions() {
 }
 
 async function main() {
+  console.log('🔍 Checking if region seeding is needed...\n');
+  
+  // Check if regions are already seeded
+  const regionCount = await prisma.region.count();
+  
+  if (regionCount > 0) {
+    // Check if any regions are missing names (shouldn't happen with current schema)
+    const regionsWithoutNames = await prisma.region.count({
+      where: {
+        name: {
+          equals: ''
+        }
+      }
+    });
+    
+    if (regionsWithoutNames === 0) {
+      console.log(`✅ Database already has ${regionCount} regions with names. Skipping seed.\n`);
+      return;
+    } else {
+      console.log(`⚠️  Found ${regionsWithoutNames} regions without names. Re-seeding...\n`);
+    }
+  } else {
+    console.log('📭 No regions found in database. Starting seed...\n');
+  }
+  
   await seedRegions();
 }
 

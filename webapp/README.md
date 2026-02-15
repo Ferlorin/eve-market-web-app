@@ -53,6 +53,17 @@ A Next.js 16 web application for analyzing trading opportunities in EVE Online m
    yarn install
    ```
 
+3. Run database migrations and seed region data:
+   ```bash
+   npx prisma migrate dev
+   npx prisma db seed  # Loads 113+ EVE region names from ESI API
+   ```
+
+   The seed script automatically:
+   - Fetches all EVE region IDs and names from ESI API
+   - Populates the regions table (required for region selectors)
+   - Skips seeding if regions already exist (idempotent)
+
 ### Development
 
 Run the development server:
@@ -72,9 +83,12 @@ The page auto-updates as you edit files (Turbopack Fast Refresh).
 ### Building for Production
 
 ```bash
-npm run build
+npm run build  # Runs migrations, seeds regions, and builds app
 npm run start
 ```
+
+**Note:** The build process automatically seeds region names on deployment (Vercel, etc).
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for production deployment details.
 
 ### Linting
 

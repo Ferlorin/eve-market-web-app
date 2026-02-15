@@ -6,27 +6,76 @@ import { Prisma } from '@prisma/client';
 
 const limit = pLimit(1); // Process one region at a time to minimize memory usage
 
-export async function fetchAllRegions(chunkIndex?: number, totalChunks?: number) {
+// Special handling for high-volume regions (>100k orders)
+// These regions are processed in dedicated parallel jobs to avoid bottlenecks
+const HIGH_VOLUME_REGIONS = [
+  10000002, // The Forge (444k orders, ~47s)
+  10000043, // Domain (196k orders, ~21s)
+  10000042, // Metropolis (127k orders, ~13s)
+  10000032, // Sinq Laison (124k orders, ~13s)
+];
+
+export async function fetchAllRegions(chunkIndex?: number, totalChunks?: number, specificRegions?: number[]) {
   const startTime = Date.now();
-  logger.info({ event: 'fetch_started', chunkIndex, totalChunks });
+  logger.info({ event: 'fetch_started', chunkIndex, totalChunks, specificRegions });
   
   try {
     // Fetch list of all EVE regions
     const allRegionIds = await esiClient.getAllRegions();
     
+    // Handle specific regions mode (for dedicated high-volume region processing)
+    if (specificRegions && specificRegions.length > 0) {
+      logger.info({
+        event: 'specific_regions_mode',
+        regions: specificRegions,
+        totalRegions: specificRegions.length
+      });
+      
+      const regionIds = specificRegions;
+      
+      // Process the specific regions with retries
+      let successful = 0;
+      let failed = 0;
+      
+      const promises = regionIds.map(regionId => 
+        limit(() => fetchRegionWithRetry(regionId))
+      );
+      
+      const results = await Promise.allSettled(promises);
+      
+      successful = results.filter(r => r.status === 'fulfilled').length;
+      failed = results.length - successful;
+      
+      const duration = Date.now() - startTime;
+      
+      logger.info({
+        event: 'fetch_completed',
+        total: regionIds.length,
+        successful,
+        failed,
+        durationMs: duration,
+        memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
+      });
+      
+      return { regionsProcessed: successful, failed, duration };
+    }
+    
     // Filter to only process this chunk if chunking is enabled
-    let regionIds = allRegionIds;
+    // Exclude high-volume regions from normal chunks (they get dedicated jobs)
+    let regionIds = allRegionIds.filter(id => !HIGH_VOLUME_REGIONS.includes(id));
+    
     if (chunkIndex !== undefined && totalChunks !== undefined && totalChunks > 1) {
-      const chunkSize = Math.ceil(allRegionIds.length / totalChunks);
+      const chunkSize = Math.ceil(regionIds.length / totalChunks);
       const startIdx = chunkIndex * chunkSize;
-      const endIdx = Math.min(startIdx + chunkSize, allRegionIds.length);
-      regionIds = allRegionIds.slice(startIdx, endIdx);
+      const endIdx = Math.min(startIdx + chunkSize, regionIds.length);
+      regionIds = regionIds.slice(startIdx, endIdx);
       
       logger.info({
         event: 'chunk_info',
         chunkIndex,
         totalChunks,
         totalRegions: allRegionIds.length,
+        excludedHighVolumeRegions: HIGH_VOLUME_REGIONS, 
         chunkRegions: regionIds.length,
         regionRange: `${startIdx}-${endIdx - 1}`
       });
