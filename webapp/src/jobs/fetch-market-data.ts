@@ -45,9 +45,9 @@ export async function fetchAllRegions(chunkIndex?: number, totalChunks?: number,
       
       successful = results.filter(r => r.status === 'fulfilled').length;
       failed = results.length - successful;
-      
+
       const duration = Date.now() - startTime;
-      
+
       logger.info({
         event: 'fetch_completed',
         total: regionIds.length,
@@ -56,7 +56,29 @@ export async function fetchAllRegions(chunkIndex?: number, totalChunks?: number,
         durationMs: duration,
         memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
       });
-      
+
+      // VACUUM to reclaim space from deleted orders
+      try {
+        const vacuumStart = Date.now();
+        logger.info({ event: 'vacuum_started' });
+
+        await prisma.$executeRawUnsafe('VACUUM ANALYZE market_orders');
+
+        const vacuumDuration = Date.now() - vacuumStart;
+        logger.info({
+          event: 'vacuum_completed',
+          durationMs: vacuumDuration
+        });
+      } catch (error) {
+        // Don't fail the entire job if VACUUM fails
+        const err = error as Error;
+        logger.warn({
+          event: 'vacuum_failed',
+          error: err.message,
+          message: 'VACUUM failed but fetch completed successfully'
+        });
+      }
+
       return { regionsProcessed: successful, failed, duration };
     }
     
@@ -136,7 +158,7 @@ export async function fetchAllRegions(chunkIndex?: number, totalChunks?: number,
     }
     
     const duration = Date.now() - startTime;
-    
+
     logger.info({
       event: 'fetch_completed',
       total: regionIds.length,
@@ -145,7 +167,29 @@ export async function fetchAllRegions(chunkIndex?: number, totalChunks?: number,
       durationMs: duration,
       memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
     });
-    
+
+    // VACUUM to reclaim space from deleted orders
+    try {
+      const vacuumStart = Date.now();
+      logger.info({ event: 'vacuum_started' });
+
+      await prisma.$executeRawUnsafe('VACUUM ANALYZE market_orders');
+
+      const vacuumDuration = Date.now() - vacuumStart;
+      logger.info({
+        event: 'vacuum_completed',
+        durationMs: vacuumDuration
+      });
+    } catch (error) {
+      // Don't fail the entire job if VACUUM fails
+      const err = error as Error;
+      logger.warn({
+        event: 'vacuum_failed',
+        error: err.message,
+        message: 'VACUUM failed but fetch completed successfully'
+      });
+    }
+
     return { regionsProcessed: successful, failed, duration };
   } catch (error) {
     const err = error as Error;
