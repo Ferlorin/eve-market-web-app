@@ -2,7 +2,7 @@ import { esiClient, ESIError } from '@/lib/esi-client';
 import { prisma } from '@/lib/db';
 import pLimit from 'p-limit';
 import { logger } from '@/lib/logger';
-import { Prisma } from '@prisma/client';
+import { marketCache } from '@/lib/market-cache';
 
 const limit = pLimit(1); // Process one region at a time to minimize memory usage
 
@@ -202,6 +202,10 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
         }
       });
 
+      // Invalidate cache AFTER new data is inserted so users get
+      // stale cached data during the fetch window rather than empty results
+      marketCache.invalidatePattern(new RegExp(`^region:${regionId}:`));
+
       logger.info({
         event: 'region_fetched',
         regionId,
@@ -209,6 +213,7 @@ async function fetchRegionWithRetry(regionId: number, maxRetries = 3): Promise<v
         ordersInserted: totalInserted,
         pages: page - 1,
         attempt: attempt + 1,
+        cacheInvalidated: true,
         memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024)
       });
       

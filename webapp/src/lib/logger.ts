@@ -1,6 +1,12 @@
 // Simple JSON logger for structured logging
 
 export const logger = {
+  debug: (obj: Record<string, any>) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(JSON.stringify({ ...obj, level: 'debug', timestamp: new Date().toISOString() }));
+    }
+  },
+
   info: (obj: Record<string, any>) => {
     console.log(JSON.stringify({ ...obj, level: 'info', timestamp: new Date().toISOString() }));
   },

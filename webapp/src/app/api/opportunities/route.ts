@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { getRegionOrdersByBuyType } from '@/lib/market-data-service';
 import { locationService } from '@/lib/location-service';
 import { itemTypeService } from '@/lib/item-type-service';
 import { z } from 'zod';
@@ -85,32 +85,10 @@ async function calculateOpportunities(
   sellRegionId: number
 ): Promise<Opportunity[]> {
   // Fetch sell orders from buy region (where we buy items)
-  const buyOrders = await prisma.marketOrder.findMany({
-    where: {
-      regionId: buyRegionId,
-      isBuyOrder: false, // Sell orders (someone selling = we buy)
-    },
-    select: {
-      typeId: true,
-      price: true,
-      volumeRemain: true,
-      locationId: true,
-    },
-  });
+  const buyOrders = await getRegionOrdersByBuyType(buyRegionId, false);
 
   // Fetch buy orders from sell region (where we sell items)
-  const sellOrders = await prisma.marketOrder.findMany({
-    where: {
-      regionId: sellRegionId,
-      isBuyOrder: true, // Buy orders (someone buying = we sell)
-    },
-    select: {
-      typeId: true,
-      price: true,
-      volumeRemain: true,
-      locationId: true,
-    },
-  });
+  const sellOrders = await getRegionOrdersByBuyType(sellRegionId, true);
 
   // Group orders by typeId for efficient matching
   const buyPriceMap = new Map<number, { price: number; volume: number; location: bigint }>();
