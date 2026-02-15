@@ -5,6 +5,42 @@
 
 ---
 
+## Session: 2026-02-15
+
+### Recent Architecture Changes
+
+#### 2026-02-15 - GitHub Actions Workflow Refactor
+**Issue:** Vercel deployment timeouts during Prisma migration + seed
+**Root Cause:** Build process running `prisma migrate deploy && prisma db seed` caused advisory lock timeout
+
+**Changes Made:**
+1. **Removed seed from build script** (`package.json`)
+   - Before: `"build": "prisma migrate deploy && prisma db seed && next build"`
+   - After: `"build": "prisma migrate deploy && next build"`
+
+2. **Reordered GitHub Actions workflow** (`.github/workflows/fetch-market-data.yml`)
+   - Before: seed-regions → fetch jobs (parallel)
+   - After: migrate → fetch jobs (parallel) → seed-regions
+   
+3. **Fixed seed.ts database connection**
+   - Changed from hardcoded localhost to `process.env.DATABASE_URL`
+   
+4. **Why seed runs LAST:**
+   - MarketOrder has NO FK constraint to Region table
+   - Market data stores regionId as numbers only
+   - Region names fetched from ESI API after data is synced
+   - Keeps names current if CCP updates region names
+
+**Files Modified:**
+- `webapp/package.json` - Removed seed from build
+- `.github/workflows/fetch-market-data.yml` - Reordered jobs
+- `webapp/prisma/seed.ts` - Use DATABASE_URL env var
+- `webapp/DEPLOYMENT.md` - Updated documentation
+- `README.md` - Clarified seed is optional for local dev
+- `_bmad-output/project-context.md` - Updated workflow documentation
+
+---
+
 ## Session: 2026-02-14
 
 ### Current Story

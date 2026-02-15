@@ -342,11 +342,25 @@ lib/                          # Domain-grouped utilities
 // vercel.json
 {
   "crons": [{
-    "path": "/api/cron/fetch-markets",
-    "schedule": "*/30 * * * *"  // Every 30 minutes
+    "path": "/api/cron/cleanup",
+    "schedule": "0 2 * * *"  // Daily at 2:00 AM
   }]
 }
 ```
+
+**GitHub Actions Workflow (fetch-market-data.yml):**
+```yaml
+# Execution order:
+# 1. migrate job - Run database migrations
+# 2. fetch-high-volume + fetch-data jobs (parallel) - Fetch market data
+# 3. seed-regions job - Fetch region names from ESI API (runs LAST)
+```
+
+**Why seed runs LAST:**
+- MarketOrder table has NO FK constraint to Region
+- Market data stores regionId as numbers only
+- Region names fetched from ESI API after data sync
+- Keeps region names up-to-date if CCP changes them
 
 **Job Requirements:**
 - 10-minute timeout (Vercel free tier limit)
@@ -452,7 +466,7 @@ docker-compose up -d
 # Run migrations
 pnpm prisma migrate dev
 
-# Seed database
+# Seed database (optional for local dev)
 pnpm prisma db seed
 
 # Run tests
@@ -472,6 +486,9 @@ vercel
 
 # Apply migrations to production
 pnpm prisma migrate deploy
+
+# Seed region names (handled by GitHub Actions)
+# Manually trigger: gh workflow run fetch-market-data.yml
 
 # Check production health
 curl https://your-app.vercel.app/api/health

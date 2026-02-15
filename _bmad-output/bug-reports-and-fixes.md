@@ -4,6 +4,152 @@
 
 ---
 
+## Bug Report #002 - Vercel Deployment Timeout & Missing Region Names (2026-02-15)
+
+### Severity
+🔴 **Critical** - Blocking production deployment
+
+### Reported By
+Harry (User)
+
+### Environment
+- Platform: Vercel
+- Database: Neon PostgreSQL
+- Build Command: `npm run build`
+- GitHub Actions: fetch-market-data.yml
+
+### Symptoms
+**1. Vercel Deployment Failure:**
+```
+Error: P1002
+The database server was reached but timed out.
+Context: Timed out trying to acquire a postgres advisory lock
+Timeout: 10000ms
+Error: Command "npm run build" exited with 1
+```
+
+**2. Production App Shows Region IDs Instead of Names:**
+- Local: "The Forge", "Domain" ✅
+- Production: "Region 10000002", "Region 10000043" ❌
+
+**3. GitHub Actions Seed Job Fails:**
+```
+PrismaClientKnownRequestError: code: 'ECONNREFUSED'
+Invalid `prisma.region.count()` invocation
+```
+
+### Root Cause Analysis
+
+**Issue 1: Build Script Running Migrations + Seed**
+```json
+// package.json (BEFORE)
+"build": "prisma migrate deploy && prisma db seed && next build"
+```
+- `prisma migrate deploy` acquires advisory lock
+- `prisma db seed` tries to fetch from ESI API during build
+- Advisory lock timeout (10s limit)
+- Vercel build fails
+
+**Issue 2: Hardcoded Database Connection**
+```typescript
+// prisma/seed.ts (BEFORE)
+const pool = new Pool({
+  host: 'localhost',
+  port: 5432,
+  user: 'postgres',
+  password: 'postgres',
+  database: 'eve_market',
+});
+```
+- Seed script hardcoded to localhost
+- GitHub Actions couldn't connect to production database
+- Region names never populated
+
+**Issue 3: Wrong Job Execution Order**
+```yaml
+# fetch-market-data.yml (BEFORE)
+jobs:
+  seed-regions: # Runs FIRST
+  fetch-high-volume:
+    needs: seed-regions  # Waits for seed
+  fetch-data:
+    needs: seed-regions  # Waits for seed
+```
+- Seed ran before fetch jobs unnecessarily
+- MarketOrder has NO FK constraint, doesn't need Region records
+- Inefficient workflow execution
+
+### Resolution
+
+**Fix 1: Remove Seed from Build Script**
+```json
+// package.json (AFTER)
+"build": "prisma migrate deploy && next build"
+```
+- Build only runs migrations (fast, no ESI calls)
+- No advisory lock timeout
+
+**Fix 2: Use DATABASE_URL Environment Variable**
+```typescript
+// prisma/seed.ts (AFTER)
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is not set');
+}
+
+const pool = new Pool({ connectionString });
+```
+- Works in local dev, GitHub Actions, and Vercel
+- Single source of truth for database connection
+
+**Fix 3: Reorder GitHub Actions Workflow**
+```yaml
+# fetch-market-data.yml (AFTER)
+jobs:
+  migrate:           # 1. Run migrations first
+  fetch-high-volume: # 2. Fetch data (parallel)
+    needs: migrate
+  fetch-data:        # 2. Fetch data (parallel)
+    needs: migrate
+  seed-regions:      # 3. Seed names LAST
+    needs: [fetch-high-volume, fetch-data]
+```
+
+**Why This Order Works:**
+- ✅ Migrations create tables
+- ✅ Fetch jobs store regionId as numbers (no FK constraint)
+- ✅ Seed runs last, fetches names from ESI API
+- ✅ If CCP changes region names, re-running seed updates them
+- ✅ Fetch jobs don't wait for seed unnecessarily
+
+### Files Modified
+1. `webapp/package.json` - Removed seed from build script
+2. `.github/workflows/fetch-market-data.yml` - Reordered jobs (migrate → fetch → seed)
+3. `webapp/prisma/seed.ts` - Use DATABASE_URL env var
+4. `webapp/DEPLOYMENT.md` - Updated deployment workflow documentation
+5. `webapp/src/app/test-table/page.tsx` - Added missing `maxProfit` property
+6. `README.md` - Clarified seed is optional for local dev
+7. `_bmad-output/project-context.md` - Updated workflow documentation
+8. `_bmad-output/dev-progress-log.md` - Added architecture change notes
+
+### Testing Verification
+- ✅ Local build: `npm run build` (no timeout)
+- ✅ Vercel deployment: Successful build
+- ✅ GitHub Actions: All jobs pass (migrate → fetch → seed)
+- ✅ Production UI: Shows region names after seed completes
+
+### Prevention Measures
+1. **Never run ESI API calls during build** - Use GitHub Actions for data sync
+2. **Always use environment variables for connections** - No hardcoded credentials
+3. **Understand FK constraints** - Optimize job execution order
+4. **Document workflow architecture** - Clear rationale for execution order
+
+### Status
+✅ **Resolved** - Production deployment successful, region names display correctly
+
+---
+
 ## Bug Report #001 - Dev Server Won't Start (2026-02-14)
 
 ### Severity
