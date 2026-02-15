@@ -28,6 +28,12 @@ jobs:
         working-directory: webapp
         run: npx prisma generate
 
+      - name: Run database migrations
+        working-directory: webapp
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Seed region names
         working-directory: webapp
         run: npx prisma db seed
