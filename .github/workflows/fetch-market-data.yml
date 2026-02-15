@@ -33,6 +33,7 @@ jobs:
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
 
   # Dedicated jobs for high-volume regions (>100k orders)
   # These 4 regions contain 54.5% of all market data
