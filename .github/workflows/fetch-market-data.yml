@@ -112,33 +112,3 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CHUNK_INDEX: ${{ matrix.chunk }}
           TOTAL_CHUNKS: 4
-
-  # Seed region names from ESI API (runs AFTER fetch completes)
-  # This ensures region names are up-to-date if ESI changes them
-  seed-regions:
-    needs: [fetch-high-volume, fetch-data]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: webapp/package-lock.json
-
-      - name: Install dependencies
-        working-directory: webapp
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Generate Prisma client
-        working-directory: webapp
-        run: npx prisma generate
-
-      - name: Seed region names from ESI API
-        working-directory: webapp
-        run: npx prisma db seed
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
