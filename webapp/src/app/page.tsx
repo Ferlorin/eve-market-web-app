@@ -22,6 +22,10 @@ export default function HomePage() {
     const temp = buyMarket;
     setBuyMarket(sellMarket);
     setSellMarket(temp);
+    // Force refetch after swap to bypass cache
+    setTimeout(() => {
+      refetchOpportunities();
+    }, 0);
   };
 
   // Fetch opportunities when both markets are selected
@@ -34,6 +38,8 @@ export default function HomePage() {
     data: opportunities,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
+    refetch: refetchOpportunities,
+    isFetching: opportunitiesFetching,
   } = useOpportunities(opportunitiesParams);
 
   // Validate market selection
@@ -227,7 +233,11 @@ export default function HomePage() {
               !opportunitiesError &&
               opportunities &&
               opportunities.length > 0 && (
-                <OpportunityTable data={opportunities} />
+                <OpportunityTable
+                  data={opportunities}
+                  onRefresh={() => refetchOpportunities()}
+                  isRefreshing={opportunitiesFetching}
+                />
               )}
           </section>
         )}

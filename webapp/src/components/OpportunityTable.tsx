@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/20/solid';
+import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export interface Opportunity {
   typeId: number;
@@ -32,16 +33,68 @@ type SortDirection = 'asc' | 'desc';
 
 interface OpportunityTableProps {
   data: Opportunity[];
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
-export function OpportunityTable({ data }: OpportunityTableProps) {
+export function OpportunityTable({ data, onRefresh, isRefreshing = false }: OpportunityTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const [sortColumn, setSortColumn] = useState<SortColumn>('roi');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  // Sort data
-  const sortedData = useMemo(() => {
-    const sorted = [...data].sort((a, b) => {
+  // Filter state
+  const [minMaxProfit, setMinMaxProfit] = useState<string>('');
+  const [minROI, setMinROI] = useState<string>('');
+
+  // Debounced filter values
+  const [debouncedMinMaxProfit, setDebouncedMinMaxProfit] = useState<string>('');
+  const [debouncedMinROI, setDebouncedMinROI] = useState<string>('');
+
+  // Reset filters when region changes (new data loaded)
+  const dataRef = useRef(data);
+  useEffect(() => {
+    // Check if data reference changed (indicates region change)
+    if (dataRef.current !== data) {
+      setMinMaxProfit('');
+      setMinROI('');
+      dataRef.current = data;
+    }
+  }, [data]);
+
+  // Debounce filter inputs (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedMinMaxProfit(minMaxProfit);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [minMaxProfit]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedMinROI(minROI);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [minROI]);
+
+  // Filter and sort data
+  const filteredAndSortedData = useMemo(() => {
+    // Apply filters first
+    let filtered = data;
+
+    // Min Max Profit filter (≥ threshold)
+    const maxProfitThreshold = parseFloat(debouncedMinMaxProfit);
+    if (!isNaN(maxProfitThreshold) && maxProfitThreshold > 0) {
+      filtered = filtered.filter(opp => opp.maxProfit >= maxProfitThreshold);
+    }
+
+    // Min ROI filter (≥ threshold)
+    const roiThreshold = parseFloat(debouncedMinROI);
+    if (!isNaN(roiThreshold) && roiThreshold > 0) {
+      filtered = filtered.filter(opp => opp.roi >= roiThreshold);
+    }
+
+    // Then sort
+    const sorted = [...filtered].sort((a, b) => {
       let aVal: string | number;
       let bVal: string | number;
 
@@ -92,10 +145,10 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
     });
 
     return sorted;
-  }, [data, sortColumn, sortDirection]);
+  }, [data, sortColumn, sortDirection, debouncedMinMaxProfit, debouncedMinROI]);
 
   const virtualizer = useVirtualizer({
-    count: sortedData.length,
+    count: filteredAndSortedData.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 48,
     overscan: 10,
@@ -162,12 +215,113 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
     );
   }
 
+  const handleClearFilters = () => {
+    setMinMaxProfit('');
+    setMinROI('');
+  };
+
+  const hasActiveFilters = minMaxProfit !== '' || minROI !== '';
+
   return (
-    <div 
+    <div
       className="w-full overflow-hidden rounded-lg border theme-border theme-bg-secondary"
       role="table"
       aria-label="Trading opportunities"
     >
+      {/* Filter Controls */}
+      <div className="border-b theme-border theme-bg-primary px-4 py-3">
+        <div className="flex flex-wrap items-end gap-3">
+          {/* Min Max Profit Filter */}
+          <div className="flex-1 min-w-[160px]">
+            <label htmlFor="min-max-profit" className="block text-xs font-medium theme-text-secondary mb-1">
+              Min Max Profit
+            </label>
+            <div className="relative">
+              <input
+                id="min-max-profit"
+                type="number"
+                min="0"
+                step="1000"
+                value={minMaxProfit}
+                onChange={(e) => setMinMaxProfit(e.target.value)}
+                placeholder="0"
+                className="w-full px-3 py-1.5 text-sm rounded border theme-border theme-bg-secondary theme-text-primary focus:outline-none focus:ring-2 focus:ring-eve-blue"
+              />
+              {minMaxProfit && (
+                <button
+                  onClick={() => setMinMaxProfit('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label="Clear min max profit filter"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Min ROI Filter */}
+          <div className="flex-1 min-w-[160px]">
+            <label htmlFor="min-roi" className="block text-xs font-medium theme-text-secondary mb-1">
+              Min ROI %
+            </label>
+            <div className="relative">
+              <input
+                id="min-roi"
+                type="number"
+                min="0"
+                step="1"
+                value={minROI}
+                onChange={(e) => setMinROI(e.target.value)}
+                placeholder="0"
+                className="w-full px-3 py-1.5 text-sm rounded border theme-border theme-bg-secondary theme-text-primary focus:outline-none focus:ring-2 focus:ring-eve-blue"
+              />
+              {minROI && (
+                <button
+                  onClick={() => setMinROI('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label="Clear min ROI filter"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Refresh Button */}
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="px-4 py-1.5 text-sm font-medium rounded border theme-border theme-bg-secondary theme-text-primary hover:bg-eve-blue/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-eve-blue flex items-center gap-2"
+              aria-label="Refresh data"
+            >
+              <ArrowPathIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          )}
+
+          {/* Clear Filters Button */}
+          {hasActiveFilters && (
+            <button
+              onClick={handleClearFilters}
+              className="px-4 py-1.5 text-sm font-medium rounded border theme-border theme-bg-secondary theme-text-primary hover:bg-eve-gold/10 transition-colors focus:outline-none focus:ring-2 focus:ring-eve-gold"
+              aria-label="Clear all filters"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
+        {/* Active Filters Indicator */}
+        {hasActiveFilters && (
+          <div className="mt-2 text-xs theme-text-secondary">
+            Showing {filteredAndSortedData.length.toLocaleString()} of {data.length.toLocaleString()} opportunities
+            {debouncedMinMaxProfit && ` • Max Profit ≥ ${parseFloat(debouncedMinMaxProfit).toLocaleString()}`}
+            {debouncedMinROI && ` • ROI ≥ ${debouncedMinROI}%`}
+          </div>
+        )}
+      </div>
+
       {/* Fixed Table Header with Sortable Columns */}
       <div 
         className="border-b theme-border theme-bg-primary"
@@ -328,7 +482,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
           }}
         >
           {virtualizer.getVirtualItems().map((virtualRow) => {
-            const opportunity = sortedData[virtualRow.index];
+            const opportunity = filteredAndSortedData[virtualRow.index];
             const isEven = virtualRow.index % 2 === 0;
 
             return (
@@ -398,7 +552,7 @@ export function OpportunityTable({ data }: OpportunityTableProps) {
       {/* Footer with Row Count and Sort Info */}
       <div className="border-t theme-border theme-bg-primary px-4 py-2 flex justify-between items-center">
         <p className="text-xs theme-text-secondary">
-          Showing {sortedData.length.toLocaleString()} opportunities
+          Showing {filteredAndSortedData.length.toLocaleString()} opportunities
         </p>
         <p className="text-xs theme-text-secondary">
           Sorted by {sortColumn} ({sortDirection})

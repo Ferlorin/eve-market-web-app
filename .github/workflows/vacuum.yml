@@ -27,6 +27,6 @@ jobs:
 
       - name: Run VACUUM ANALYZE on market_orders
         working-directory: webapp
-        run: npx tsx -e "import { prisma } from './src/lib/db.ts'; await prisma.\$executeRawUnsafe('VACUUM ANALYZE market_orders'); console.log('✓ VACUUM ANALYZE completed successfully'); await prisma.\$disconnect();"
+        run: npx tsx scripts/vacuum-database.ts
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
