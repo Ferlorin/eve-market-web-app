@@ -9,23 +9,26 @@ import { MarketOrder } from '@prisma/client';
 const freshnessCache = new Map<number, { lastFetchedAt: Date; checkedAt: number }>();
 const FRESHNESS_CHECK_TTL_MS = 60 * 1000; // 60 seconds
 
-async function getRegionLastFetchedAt(regionId: number): Promise<Date | null> {
+async function getRegionLatestFetchedAt(regionId: number): Promise<Date | null> {
   const cached = freshnessCache.get(regionId);
   if (cached && Date.now() - cached.checkedAt < FRESHNESS_CHECK_TTL_MS) {
     return cached.lastFetchedAt;
   }
 
-  const region = await prisma.region.findUnique({
+  // Query the actual latest fetchedAt from market_orders for this region.
+  // Uses the composite index on (regionId, typeId) so this is fast.
+  const result = await prisma.marketOrder.findFirst({
     where: { regionId },
-    select: { lastFetchedAt: true },
+    orderBy: { fetchedAt: 'desc' },
+    select: { fetchedAt: true },
   });
 
-  if (region?.lastFetchedAt) {
+  if (result?.fetchedAt) {
     freshnessCache.set(regionId, {
-      lastFetchedAt: region.lastFetchedAt,
+      lastFetchedAt: result.fetchedAt,
       checkedAt: Date.now(),
     });
-    return region.lastFetchedAt;
+    return result.fetchedAt;
   }
 
   return null;
@@ -59,7 +62,7 @@ export async function getRegionOrders(regionId: number): Promise<MarketOrder[]> 
 
   const cached = marketCache.get<MarketOrder[]>(cacheKey);
   if (cached) {
-    const lastFetched = await getRegionLastFetchedAt(regionId);
+    const lastFetched = await getRegionLatestFetchedAt(regionId);
     if (!isCacheStale(cacheKey, regionId, lastFetched)) {
       return cached;
     }
@@ -85,7 +88,7 @@ export async function getOrdersByType(regionId: number, typeId: number): Promise
 
   const cached = marketCache.get<MarketOrder[]>(cacheKey);
   if (cached) {
-    const lastFetched = await getRegionLastFetchedAt(regionId);
+    const lastFetched = await getRegionLatestFetchedAt(regionId);
     if (!isCacheStale(cacheKey, regionId, lastFetched)) {
       return cached;
     }
@@ -114,7 +117,7 @@ export async function getRegionOrdersByBuyType(
 
   const cached = marketCache.get<Pick<MarketOrder, 'typeId' | 'price' | 'volumeRemain' | 'locationId'>[]>(cacheKey);
   if (cached) {
-    const lastFetched = await getRegionLastFetchedAt(regionId);
+    const lastFetched = await getRegionLatestFetchedAt(regionId);
     if (!isCacheStale(cacheKey, regionId, lastFetched)) {
       return cached;
     }
