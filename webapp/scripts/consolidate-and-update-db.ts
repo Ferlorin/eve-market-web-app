@@ -160,83 +160,87 @@ async function updateDatabaseStreamingMode(
     logger.info({ event: 'truncating_market_orders' });
     await prisma.$executeRawUnsafe('TRUNCATE TABLE market_orders');
 
-    // Step 2: Process each JSON file one at a time (streaming mode)
+    // Step 2: Process JSON files in parallel (4 concurrent workers)
     const BATCH_SIZE = 5000;
+    const CONCURRENCY = 4;
     let totalInserted = 0;
 
-    for (const meta of fileMetadata) {
-      const filepath = path.join(artifactsDir, meta.file);
+    // Process files in chunks of CONCURRENCY
+    for (let i = 0; i < fileMetadata.length; i += CONCURRENCY) {
+      const chunk = fileMetadata.slice(i, i + CONCURRENCY);
 
-      // Load JSON file (only one at a time to save memory)
-      const content = fs.readFileSync(filepath, 'utf-8');
-      const regionData: RegionData = JSON.parse(content);
+      const results = await Promise.all(
+        chunk.map(async (meta) => {
+          const filepath = path.join(artifactsDir, meta.file);
 
-      const { regionId, orders, fetchedAt } = regionData;
+          // Load JSON file
+          const content = fs.readFileSync(filepath, 'utf-8');
+          const regionData: RegionData = JSON.parse(content);
 
-      if (orders.length === 0) continue;
+          const { regionId, orders, fetchedAt } = regionData;
 
-      const fetchedAtDate = new Date(fetchedAt);
+          if (orders.length === 0) return 0;
 
-      // Process orders in batches
-      for (let i = 0; i < orders.length; i += BATCH_SIZE) {
-        const batch = orders.slice(i, i + BATCH_SIZE);
+          const fetchedAtDate = new Date(fetchedAt);
+          let regionInserted = 0;
 
-        const values = batch.map(order => {
-          const orderId = order.order_id;
-          const typeId = order.type_id;
-          const price = order.price;
-          const volumeRemain = order.volume_remain;
-          const locationId = order.location_id;
-          const isBuyOrder = order.is_buy_order;
-          const issued = new Date(order.issued).toISOString();
-          const fetchedAtIso = fetchedAtDate.toISOString();
+          // Process orders in batches
+          for (let j = 0; j < orders.length; j += BATCH_SIZE) {
+            const batch = orders.slice(j, j + BATCH_SIZE);
 
-          return `(${orderId}, ${regionId}, ${typeId}, ${price}, ${volumeRemain}, ${locationId}, ${isBuyOrder}, '${issued}', '${fetchedAtIso}')`;
-        }).join(',\n');
+            const values = batch.map(order => {
+              const orderId = order.order_id;
+              const typeId = order.type_id;
+              const price = order.price;
+              const volumeRemain = order.volume_remain;
+              const locationId = order.location_id;
+              const isBuyOrder = order.is_buy_order;
+              const issued = new Date(order.issued).toISOString();
+              const fetchedAtIso = fetchedAtDate.toISOString();
 
-        await prisma.$executeRawUnsafe(`
-          INSERT INTO market_orders (
-            "orderId", "regionId", "typeId", price, "volumeRemain",
-            "locationId", "isBuyOrder", issued, "fetchedAt"
-          )
-          VALUES ${values}
-        `);
+              return `(${orderId}, ${regionId}, ${typeId}, ${price}, ${volumeRemain}, ${locationId}, ${isBuyOrder}, '${issued}', '${fetchedAtIso}')`;
+            }).join(',\n');
 
-        totalInserted += batch.length;
+            await prisma.$executeRawUnsafe(`
+              INSERT INTO market_orders (
+                "orderId", "regionId", "typeId", price, "volumeRemain",
+                "locationId", "isBuyOrder", issued, "fetchedAt"
+              )
+              VALUES ${values}
+              ON CONFLICT ("orderId") DO NOTHING
+            `);
 
-        logger.info({
-          event: 'batch_inserted',
-          regionId,
-          batchSize: batch.length,
-          totalInserted,
-          progress: `${((totalInserted / totalOrders) * 100).toFixed(1)}%`
-        });
+            regionInserted += batch.length;
+          }
 
-        // Force GC every 10k orders
-        if (totalInserted % 10000 === 0 && global.gc) {
-          global.gc();
-        }
-      }
+          // Update region lastFetchedAt
+          await prisma.region.upsert({
+            where: { regionId },
+            update: { lastFetchedAt: fetchedAt },
+            create: {
+              regionId,
+              name: `Region ${regionId}`,
+              lastFetchedAt: fetchedAt
+            }
+          });
 
-      // Update region lastFetchedAt
-      await prisma.region.upsert({
-        where: { regionId },
-        update: { lastFetchedAt: fetchedAtDate },
-        create: {
-          regionId,
-          name: `Region ${regionId}`,
-          lastFetchedAt: fetchedAtDate
-        }
-      });
+          return regionInserted;
+        })
+      );
+
+      // Update total progress after chunk completes
+      const chunkInserted = results.reduce((sum, count) => sum + count, 0);
+      totalInserted += chunkInserted;
 
       logger.info({
-        event: 'region_completed',
-        regionId,
-        ordersInserted: orders.length,
-        totalProgress: `${totalInserted}/${totalOrders}`
+        event: 'chunk_completed',
+        regions: chunk.length,
+        chunkInserted,
+        totalInserted,
+        progress: `${((totalInserted / totalOrders) * 100).toFixed(1)}%`
       });
 
-      // Free memory after processing this region
+      // Force GC after each chunk
       if (global.gc) {
         global.gc();
       }
