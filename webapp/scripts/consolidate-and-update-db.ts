@@ -1,13 +1,24 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import { logger } from '../src/lib/logger';
 import { marketCache } from '../src/lib/market-cache';
 import { dbMetrics } from '../src/lib/db-metrics';
 import * as fs from 'fs';
 import * as path from 'path';
 
+const { Pool } = pg;
+
+const pool = new Pool({
+  connectionString: process.env.NEON_DATABASE_URL,
+});
+
+const adapter = new PrismaPg(pool);
+
 // Prisma will automatically use directUrl from schema.prisma for operations
 // like TRUNCATE and VACUUM that require non-pooled connections
 const prisma = new PrismaClient({
+  adapter,
   log: [
     { emit: 'event', level: 'query' },
   ],
