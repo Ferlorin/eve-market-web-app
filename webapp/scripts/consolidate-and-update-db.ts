@@ -11,6 +11,11 @@ const { Pool } = pg;
 
 const pool = new Pool({
   connectionString: process.env.NEON_DATABASE_URL,
+  max: 10, // Maximum pool connections
+  idleTimeoutMillis: 30000, // Close idle connections after 30s
+  connectionTimeoutMillis: 10000, // Wait up to 10s for connection (handles cold start)
+  keepAlive: true, // Detect suspended compute
+  keepAliveInitialDelayMillis: 10000,
 });
 
 const adapter = new PrismaPg(pool);
