@@ -1,4 +1,17 @@
-import { prisma } from '../src/lib/db';
+import { PrismaClient } from '@prisma/client';
+import { dbMetrics } from '../src/lib/db-metrics';
+
+const prisma = new PrismaClient({
+  log: [
+    { emit: 'event', level: 'query' },
+  ],
+});
+
+// Track queries
+prisma.$on('query', (e) => {
+  const operation = e.query.split(' ')[0];
+  dbMetrics.incrementQuery(operation);
+});
 
 async function vacuumDatabase() {
   console.log('🧹 Running VACUUM ANALYZE to reclaim space...\n');
@@ -32,6 +45,12 @@ async function vacuumDatabase() {
     console.log('Table Size:', result[0].table_size);
     console.log('Indexes Size:', result[0].indexes_size);
     console.log('Row Count:', result[0].row_count.toString());
+
+    // Log metrics
+    console.log('\n📊 VACUUM Metrics:');
+    const metrics = dbMetrics.getStats();
+    console.log(`Queries executed: ${metrics.totalQueries}`);
+    console.log(`Duration: ${(metrics.durationMs / 1000).toFixed(1)}s`);
 
   } catch (error) {
     console.error('❌ VACUUM failed:', error);

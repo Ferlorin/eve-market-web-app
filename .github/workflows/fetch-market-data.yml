@@ -35,10 +35,9 @@ jobs:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           NEON_DIRECT_DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}
 
-  # Dedicated jobs for high-volume regions (>100k orders)
-  # These 4 regions contain 54.5% of all market data
-  # Processing them separately prevents bottlenecks in the chunk jobs
-  fetch-high-volume:
+  # PHASE 1: Fetch data and save to JSON artifacts (NO DATABASE OPERATIONS)
+  # High-volume regions processed separately
+  fetch-high-volume-json:
     needs: migrate
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -65,20 +64,21 @@ jobs:
         working-directory: webapp
         run: npm ci --prefer-offline --no-audit
 
-      - name: Generate Prisma client
+      - name: Fetch ${{ matrix.region.name }} to JSON (${{ matrix.region.orders }} orders)
         working-directory: webapp
-        run: npx prisma generate
-
-      - name: Fetch ${{ matrix.region.name }} (${{ matrix.region.orders }} orders)
-        working-directory: webapp
-        run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-and-cleanup.ts
+        run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-to-json.ts
         env:
-          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           SPECIFIC_REGIONS: ${{ matrix.region.id }}
 
-  # Normal chunks for remaining 109 regions (excluding high-volume regions)
-  # These are distributed across 4 parallel jobs
-  fetch-data:
+      - name: Upload JSON artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-data-region-${{ matrix.region.id }}
+          path: webapp/market-data-artifacts/region-${{ matrix.region.id }}.json
+          retention-days: 1
+
+  # Normal chunks for remaining regions (NO DATABASE OPERATIONS)
+  fetch-chunks-json:
     needs: migrate
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -101,23 +101,26 @@ jobs:
         working-directory: webapp
         run: npm ci --prefer-offline --no-audit
 
-      - name: Generate Prisma client
+      - name: Fetch chunk ${{ matrix.chunk }} to JSON
         working-directory: webapp
-        run: npx prisma generate
-
-      - name: Fetch market data chunk ${{ matrix.chunk }}
-        working-directory: webapp
-        run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-and-cleanup.ts
+        run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-to-json.ts
         env:
-          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
           CHUNK_INDEX: ${{ matrix.chunk }}
           TOTAL_CHUNKS: 4
 
-  # Run VACUUM ANALYZE after all fetch jobs complete
-  vacuum:
-    needs: [fetch-high-volume, fetch-data]
+      - name: Upload JSON artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-data-chunk-${{ matrix.chunk }}
+          path: webapp/market-data-artifacts/*.json
+          retention-days: 1
+
+  # PHASE 2: Consolidate all JSON and update database in ONE transaction
+  # This reduces DB connections from ~800 to ~10
+  consolidate-and-update:
+    needs: [fetch-high-volume-json, fetch-chunks-json]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
@@ -136,8 +139,23 @@ jobs:
         working-directory: webapp
         run: npx prisma generate
 
-      - name: Run VACUUM ANALYZE on market_orders
+      - name: Download all JSON artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: webapp/market-data-artifacts
+          pattern: market-data-*
+          merge-multiple: true
+
+      - name: Consolidate and update database
+        working-directory: webapp
+        run: node --max-old-space-size=4096 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/consolidate-and-update-db.ts
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          NEON_DIRECT_DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}
+
+      - name: Run VACUUM ANALYZE
         working-directory: webapp
         run: npx tsx scripts/vacuum-database.ts
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          NEON_DIRECT_DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}

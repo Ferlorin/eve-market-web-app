@@ -10,9 +10,15 @@ if (!process.env.NEON_DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.NEON_DATABASE_URL,
-  max: process.env.VERCEL ? 5 : 20,
-  idleTimeoutMillis: 30000,
+  // Reduced connection pool to prevent overwhelming CockroachDB/Neon
+  // Vercel serverless: 2 connections per instance
+  // GitHub Actions/local: 5 connections
+  max: process.env.VERCEL ? 2 : 5,
+  // Close idle connections faster to free up resources
+  idleTimeoutMillis: 20000,
   connectionTimeoutMillis: 5000,
+  // Allow connections to be reused
+  allowExitOnIdle: false,
 });
 
 const adapter = new PrismaPg(pool);
