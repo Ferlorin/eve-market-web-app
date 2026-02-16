@@ -43,3 +43,6 @@ next-env.d.ts
 /src/generated/prisma
 
 .vercel
+
+# Market data fetch artifacts (temporary JSON files)
+market-data-artifacts/

@@ -21,7 +21,9 @@ export function DataFreshness() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['data-freshness'],
     queryFn: fetchDataFreshness,
-    refetchInterval: 60000, // Refetch every minute
+    // Reduced from 60s to 5 minutes to minimize database requests
+    // Data fetches happen every 30min anyway, so checking every 5min is sufficient
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
   if (isLoading || error || !data) {
