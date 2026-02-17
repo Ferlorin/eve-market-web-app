@@ -45,7 +45,7 @@ development_status:
   1-1-initialize-nextjs-16-project-with-starter-template: review
   1-2-configure-docker-compose-for-local-postgresql: review
   1-3-set-up-prisma-orm-and-database-connection: review
-  1-4-install-design-system-and-core-dependencies: ready-for-dev
+  1-4-install-design-system-and-core-dependencies: done
   epic-1-retrospective: optional
 
   # Epic 2: Market Data Collection Pipeline
@@ -76,7 +76,7 @@ development_status:
 
   # Epic 5: User Experience & Accessibility
   epic-5: backlog
-  5-1-implement-theme-switching-system-with-localstorage-persistence: ready-for-dev
+  5-1-implement-theme-switching-system-with-localstorage-persistence: review
   5-2-add-full-keyboard-navigation-support: ready-for-dev
   5-3-apply-wcag-aa-accessibility-standards-with-aria-support: ready-for-dev
   5-4-add-font-scaling-feature-for-user-customization: ready-for-dev

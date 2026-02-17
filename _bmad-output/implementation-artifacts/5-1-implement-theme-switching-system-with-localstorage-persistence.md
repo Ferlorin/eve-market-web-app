@@ -1,6 +1,6 @@
 # Story 5.1: Implement Theme Switching System with localStorage Persistence
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -518,12 +518,26 @@ After this story is complete:
 
 ### Agent Model Used
 
-_To be filled by Dev agent_
+Claude Sonnet 4.5
 
 ### Completion Notes
 
-_To be filled by Dev agent_
+**Completed:** 2026-02-17
+
+**Bug Fixed:** Scrollbar invisible/incorrect in light theme.
+
+**Root cause:** `globals.css` scrollbar CSS used `@apply bg-gray-800/600/500` which resolves via CSS custom properties. In `.light` theme, `--color-gray-800` = `#FFFFFF` (white track) and `--color-gray-600` = `#D1D5DB` (near-invisible thumb). Firefox scrollbar was hardcoded dark hex values with no light theme override.
+
+**Fix applied:** Added `.light` scoped overrides for both WebKit and Firefox scrollbars using light-theme-appropriate CSS variable values:
+- Track: `--color-gray-700` (#E5E7EB)
+- Thumb: `--color-gray-500` (#9CA3AF)
+- Thumb hover: `--color-gray-400` (#6B7280)
+
+**Note:** ThemeContext (`src/lib/theme-context.tsx`) and ThemeToggle (`src/components/ThemeToggle.tsx`) were already implemented prior to this story. Theme system uses `.light`/`.dark` classes on `<html>` (diverges from story spec which used `.dark` only — existing implementation retained as-is).
+
+**Status:** review
 
 ### File List
 
-_To be filled by Dev agent_
+**Modified:**
+- `webapp/src/app/globals.css` — Added `.light` scoped scrollbar overrides for WebKit and Firefox

@@ -128,10 +128,30 @@ body {
   @apply bg-gray-500;
 }
 
-/* Firefox scrollbar */
+/* Firefox scrollbar — dark theme (default) */
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: #3E4855 #151921;
+}
+
+/* Light theme scrollbar overrides */
+.light .scrollbar-thin::-webkit-scrollbar-track {
+  background-color: var(--color-gray-700); /* #E5E7EB */
+  border-radius: 4px;
+}
+
+.light .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-gray-500); /* #9CA3AF */
+  border-radius: 4px;
+}
+
+.light .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-gray-400); /* #6B7280 */
+}
+
+/* Firefox scrollbar — light theme */
+.light .scrollbar-thin {
+  scrollbar-color: var(--color-gray-500) var(--color-gray-700);
 }
 
 /* Focus-visible styles (keyboard only, not mouse) */
