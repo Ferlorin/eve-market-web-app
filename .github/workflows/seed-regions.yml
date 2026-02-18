@@ -3,9 +3,6 @@ name: Seed Region Data
 on:
   # Run manually via workflow_dispatch
   workflow_dispatch:
-  # Run daily at 3 AM UTC to keep region names fresh
-  schedule:
-    - cron: '0 3 * * *'
   # Run after market data fetch completes
   workflow_run:
     workflows: ["Fetch Market Data"]
