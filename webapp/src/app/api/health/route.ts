@@ -1,52 +1,58 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import fs from 'fs';
+import path from 'path';
 
+/**
+ * Health check for static-cache architecture
+ * Checks metadata.json instead of database
+ */
 export async function GET() {
   try {
-    // Find the most recent lastFetchedAt timestamp
-    const mostRecentFetch = await prisma.region.findFirst({
-      where: {
-        lastFetchedAt: {
-          not: null,
+    const metadataPath = path.join(process.cwd(), 'public', 'data', 'metadata.json');
+
+    // Check if metadata file exists
+    if (!fs.existsSync(metadataPath)) {
+      return NextResponse.json(
+        {
+          status: 'unhealthy',
+          error: 'No market data available',
+          timestamp: new Date().toISOString(),
         },
-      },
-      orderBy: {
-        lastFetchedAt: 'desc',
-      },
-      select: {
-        lastFetchedAt: true,
-      },
-    });
-
-    const now = new Date();
-    let dataAge = null;
-    let status: 'healthy' | 'degraded' | 'unhealthy' = 'unhealthy';
-    let statusCode = 503;
-
-    if (mostRecentFetch && mostRecentFetch.lastFetchedAt) {
-      // Calculate data age in minutes
-      dataAge = Math.floor(
-        (now.getTime() - mostRecentFetch.lastFetchedAt.getTime()) / (1000 * 60)
+        { status: 503 }
       );
+    }
 
-      // Determine health status
-      if (dataAge < 45) {
-        status = 'healthy';
-        statusCode = 200;
-      } else if (dataAge < 120) {
-        status = 'degraded';
-        statusCode = 200;
-      } else {
-        status = 'unhealthy';
-        statusCode = 503;
-      }
+    // Read metadata
+    const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+    const lastGenerated = new Date(metadata.lastGenerated);
+    const now = new Date();
+
+    // Calculate data age in minutes
+    const dataAge = Math.floor(
+      (now.getTime() - lastGenerated.getTime()) / (1000 * 60)
+    );
+
+    // Determine health status
+    let status: 'healthy' | 'degraded' | 'unhealthy';
+    let statusCode: number;
+
+    if (dataAge < 45) {
+      status = 'healthy';
+      statusCode = 200;
+    } else if (dataAge < 120) {
+      status = 'degraded';
+      statusCode = 200;
+    } else {
+      status = 'unhealthy';
+      statusCode = 503;
     }
 
     const response = {
       status,
-      lastFetchTime: mostRecentFetch?.lastFetchedAt?.toISOString() || null,
-      dataAge: dataAge !== null ? `${dataAge} minutes` : 'No data',
+      lastFetchTime: lastGenerated.toISOString(),
+      dataAge: `${dataAge} minutes`,
+      regionPairs: metadata.regionPairs,
       timestamp: now.toISOString(),
     };
 
