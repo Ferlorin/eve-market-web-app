@@ -114,7 +114,10 @@ function loadRegionData(artifactsDir: string): Map<number, RegionData> {
 function calculateOpportunities(
   buyRegionData: RegionData,
   sellRegionData: RegionData
-): Array<Omit<Opportunity, 'itemName' | 'buyStation' | 'sellStation'>> {
+): Array<Omit<Opportunity, 'itemName' | 'buyStation' | 'sellStation'> & {
+  buyLocationId: number;
+  sellLocationId: number;
+}> {
   const buyOrders = buyRegionData.orders.filter(o => !o.is_buy_order); // Sell orders in buy region
   const sellOrders = sellRegionData.orders.filter(o => o.is_buy_order); // Buy orders in sell region
 
