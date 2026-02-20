@@ -5,14 +5,14 @@ import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
-interface DataFreshnessResponse {
-  lastFetchedAt: string;
+interface MetadataResponse {
+  lastGenerated: string;
 }
 
-async function fetchDataFreshness(): Promise<DataFreshnessResponse> {
-  const response = await fetch('/api/data-freshness');
+async function fetchMetadata(): Promise<MetadataResponse> {
+  const response = await fetch('/data/metadata.json');
   if (!response.ok) {
-    throw new Error('Failed to fetch data freshness');
+    throw new Error('Failed to fetch metadata');
   }
   return response.json();
 }
@@ -22,20 +22,20 @@ export function StaleDataBanner() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['data-freshness-banner'],
-    queryFn: fetchDataFreshness,
+    queryFn: fetchMetadata,
     refetchInterval: 60000, // Refetch every minute
   });
 
   // Reset dismissed state when data changes
   useEffect(() => {
     setDismissed(false);
-  }, [data?.lastFetchedAt]);
+  }, [data?.lastGenerated]);
 
   if (isLoading || error || !data || dismissed) {
     return null;
   }
 
-  const lastFetchedAt = new Date(data.lastFetchedAt);
+  const lastFetchedAt = new Date(data.lastGenerated);
   const now = new Date();
   const ageInMinutes = (now.getTime() - lastFetchedAt.getTime()) / (1000 * 60);
 
