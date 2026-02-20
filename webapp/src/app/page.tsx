@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { RegionSelector } from '@/components/RegionSelector';
 import { DataFreshness } from '@/components/DataFreshness';
 import { FreshDataNotification } from '@/components/FreshDataNotification';
+import { NoDataYetBanner } from '@/components/NoDataYetBanner';
 import { OpportunityTable } from '@/components/OpportunityTable';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
 import { useRegions } from '@/lib/queries/regions';
 import { useOpportunities } from '@/lib/queries/opportunities';
+import { useQuery } from '@tanstack/react-query';
 import type { Region } from '@/lib/regions';
 
 export default function HomePage() {
@@ -17,6 +19,20 @@ export default function HomePage() {
   const [sellMarket, setSellMarket] = useState<Region | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [currentDataTimestamp, setCurrentDataTimestamp] = useState<string | null>(null);
+
+  // Check if metadata exists (data available)
+  const { data: metadata } = useQuery({
+    queryKey: ['metadata-availability'],
+    queryFn: async () => {
+      const res = await fetch('/data/metadata.json');
+      if (!res.ok) return null;
+      return res.json();
+    },
+    retry: false,
+    refetchInterval: 30000, // Check every 30 seconds
+  });
+
+  const hasData = !!metadata;
 
   // Swap buy and sell markets
   const handleSwapMarkets = () => {
@@ -79,6 +95,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen theme-bg-primary">
+      {/* No Data Yet Banner */}
+      <NoDataYetBanner />
+
       {/* Fresh Data Notification */}
       <FreshDataNotification currentDataTimestamp={currentDataTimestamp} />
 
@@ -111,18 +130,19 @@ export default function HomePage() {
             <div className="flex-1 w-full">
               <RegionSelector
                 label="Buy Market"
-                placeholder="Select region to buy from..."
+                placeholder={hasData ? "Select region to buy from..." : "Waiting for market data..."}
                 value={buyMarket}
                 onChange={setBuyMarket}
                 regions={regions ?? []}
                 autoFocus
+                disabled={!hasData}
               />
             </div>
 
             {/* Swap Button */}
             <button
               onClick={handleSwapMarkets}
-              disabled={!buyMarket && !sellMarket}
+              disabled={!hasData || (!buyMarket && !sellMarket)}
               className="theme-bg-secondary theme-border border rounded-lg p-3 hover:bg-eve-blue/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-eve-blue focus:ring-offset-2 theme-bg-primary"
               title="Swap buy and sell markets"
               aria-label="Swap buy and sell markets"
@@ -134,10 +154,11 @@ export default function HomePage() {
             <div className="flex-1 w-full">
               <RegionSelector
                 label="Sell Market"
-                placeholder="Select region to sell in..."
+                placeholder={hasData ? "Select region to sell in..." : "Waiting for market data..."}
                 value={sellMarket}
                 onChange={setSellMarket}
                 regions={regions ?? []}
+                disabled={!hasData}
               />
             </div>
           </div>
