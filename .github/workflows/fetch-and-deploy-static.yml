@@ -139,9 +139,9 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         working-directory: webapp
         run: |
-          # Remove rootDirectory from project.json to prevent path doubling
+          # Set rootDirectory to "." (current dir) instead of "webapp" to prevent path doubling
           if [ -f .vercel/project.json ]; then
-            cat .vercel/project.json | jq 'del(.settings.rootDirectory)' > .vercel/project.json.tmp
+            cat .vercel/project.json | jq '.settings.rootDirectory = "."' > .vercel/project.json.tmp
             mv .vercel/project.json.tmp .vercel/project.json
             echo "Fixed project.json:"
             cat .vercel/project.json
@@ -156,9 +156,9 @@ jobs:
         if: github.event_name == 'push'
         working-directory: webapp
         run: |
-          # Remove rootDirectory from project.json to prevent path doubling
+          # Set rootDirectory to "." (current dir) instead of "webapp" to prevent path doubling
           if [ -f .vercel/project.json ]; then
-            cat .vercel/project.json | jq 'del(.settings.rootDirectory)' > .vercel/project.json.tmp
+            cat .vercel/project.json | jq '.settings.rootDirectory = "."' > .vercel/project.json.tmp
             mv .vercel/project.json.tmp .vercel/project.json
             echo "Fixed project.json:"
             cat .vercel/project.json
