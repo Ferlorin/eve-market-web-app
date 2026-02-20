@@ -4,18 +4,19 @@ A Next.js 16 web application for analyzing profitable trading opportunities betw
 
 ## Overview
 
-The EVE Market Web App helps traders identify arbitrage opportunities by comparing buy and sell prices across different EVE Online regions. It automatically fetches and caches market data every 30 minutes, calculates ROI opportunities, and presents them in a high-performance, sortable table.
+The EVE Market Web App helps traders identify arbitrage opportunities by comparing buy and sell prices across different EVE Online regions. It automatically fetches and generates static market data every 30 minutes via GitHub Actions, serving pre-calculated opportunities from Vercel's global Edge CDN for instant access.
 
 ### Key Features
 
-- 🌍 **Region Selection** - Choose buy and sell markets from 60+ EVE regions with fuzzy autocomplete search
-- 📊 **ROI Calculations** - Instant calculations showing profitable trading opportunities
-- ⚡ **High-Performance Table** - Virtual scrolling handles 10,000+ opportunities smoothly
-- 🔄 **Auto-Refresh** - Market data updates every 30 minutes via background jobs
+- 🌍 **Region Selection** - Choose buy and sell markets from 10 active EVE regions with autocomplete search
+- 📊 **ROI Calculations** - Pre-calculated profitable trading opportunities (top 1000 per region pair)
+- ⚡ **Instant Loading** - Static JSON served from Vercel Edge CDN (20-50ms globally)
+- 🔄 **Auto-Refresh** - Market data updates every 30 minutes via GitHub Actions
 - 🎨 **Theme Switching** - Light and dark themes with system preference detection
 - ⌨️ **Keyboard Navigation** - Full keyboard support for power users
 - ♿ **Accessibility** - WCAG AA compliant with ARIA support
 - 📱 **Responsive Design** - Desktop-optimized layout (minimum 1280px width)
+- 🚀 **Static-Cache Architecture** - Zero database costs, 100% static file serving
 
 ## Quick Download & Run
 
