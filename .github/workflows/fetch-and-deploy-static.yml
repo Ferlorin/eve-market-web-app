@@ -128,60 +128,29 @@ jobs:
         run: npm install --global vercel@latest
 
       # Deploy to PRODUCTION on schedule/manual, PREVIEW on push (for testing)
-      # IMPORTANT: Vercel project "Root Directory" must be EMPTY (cleared in dashboard)
-      # All commands run from webapp/ directory to find package.json
+      # Run from REPO ROOT - let Vercel's "Root Directory: webapp" handle subdirectory
       - name: Pull Vercel Environment Information (Production)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        working-directory: webapp
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Fix Vercel Root Directory (Production)
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        working-directory: webapp
-        run: |
-          # Set rootDirectory to "." (current dir) instead of "webapp" to prevent path doubling
-          if [ -f .vercel/project.json ]; then
-            cat .vercel/project.json | jq '.settings.rootDirectory = "."' > .vercel/project.json.tmp
-            mv .vercel/project.json.tmp .vercel/project.json
-            echo "Fixed project.json:"
-            cat .vercel/project.json
-          fi
 
       - name: Pull Vercel Environment Information (Preview)
         if: github.event_name == 'push'
-        working-directory: webapp
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Fix Vercel Root Directory (Preview)
-        if: github.event_name == 'push'
-        working-directory: webapp
-        run: |
-          # Set rootDirectory to "." (current dir) instead of "webapp" to prevent path doubling
-          if [ -f .vercel/project.json ]; then
-            cat .vercel/project.json | jq '.settings.rootDirectory = "."' > .vercel/project.json.tmp
-            mv .vercel/project.json.tmp .vercel/project.json
-            echo "Fixed project.json:"
-            cat .vercel/project.json
-          fi
 
       - name: Build Project Artifacts (Production)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        working-directory: webapp
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Project Artifacts (Preview)
         if: github.event_name == 'push'
-        working-directory: webapp
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Production
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        working-directory: webapp
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Preview
         if: github.event_name == 'push'
-        working-directory: webapp
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deployment Summary
