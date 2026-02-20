@@ -128,8 +128,8 @@ jobs:
         run: npm install --global vercel@latest
 
       # Deploy to PRODUCTION on schedule/manual, PREVIEW on push (for testing)
-      # IMPORTANT: Vercel project "Root Directory" must be empty (not "webapp")
-      # Commands run from webapp directory directly
+      # IMPORTANT: Vercel project "Root Directory" must be EMPTY (cleared in dashboard)
+      # All commands run from webapp/ directory to find package.json
       - name: Pull Vercel Environment Information (Production)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         working-directory: webapp
