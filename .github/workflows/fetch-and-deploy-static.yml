@@ -22,7 +22,7 @@ jobs:
           - { id: '10000042', name: 'Metropolis', orders: '127k' }
           - { id: '10000032', name: 'Sinq Laison', orders: '124k' }
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 8  # Increased from 4 (GitHub free tier supports up to 20)
 
     steps:
       - uses: actions/checkout@v4
@@ -56,9 +56,9 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        chunk: [0, 1, 2, 3]
+        chunk: [0, 1, 2, 3, 4, 5, 6, 7]  # Split into 8 smaller chunks
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 8  # Increased from 4
 
     steps:
       - uses: actions/checkout@v4
@@ -78,7 +78,7 @@ jobs:
         run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-to-json.ts
         env:
           CHUNK_INDEX: ${{ matrix.chunk }}
-          TOTAL_CHUNKS: 4
+          TOTAL_CHUNKS: 8  # Updated to match matrix size
 
       - name: Upload JSON artifacts
         uses: actions/upload-artifact@v4
@@ -127,14 +127,14 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }} --cwd webapp
+      - name: Change to webapp directory and pull Vercel config
+        run: cd webapp && vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd webapp
+        run: cd webapp && vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --cwd webapp
+        run: cd webapp && vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deployment Summary
         run: |
