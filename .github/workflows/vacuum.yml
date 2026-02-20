@@ -3,6 +3,7 @@ name: Database Vacuum
 on:
   workflow_dispatch:
 
+
 jobs:
   vacuum:
     runs-on: ubuntu-latest
