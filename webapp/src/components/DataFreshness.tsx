@@ -5,24 +5,26 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import { ClockIcon } from '@heroicons/react/24/outline';
 
-interface DataFreshnessResponse {
-  lastFetchedAt: string;
+interface MetadataResponse {
+  lastGenerated: string;
+  regionPairs: number;
+  regions: number;
+  skippedPairs: number;
+  version: string;
 }
 
-async function fetchDataFreshness(): Promise<DataFreshnessResponse> {
-  const response = await fetch('/api/data-freshness');
+async function fetchMetadata(): Promise<MetadataResponse> {
+  const response = await fetch('/data/metadata.json');
   if (!response.ok) {
-    throw new Error('Failed to fetch data freshness');
+    throw new Error('Failed to fetch metadata');
   }
   return response.json();
 }
 
 export function DataFreshness() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['data-freshness'],
-    queryFn: fetchDataFreshness,
-    // Reduced from 60s to 5 minutes to minimize database requests
-    // Data fetches happen every 30min anyway, so checking every 5min is sufficient
+    queryKey: ['metadata'],
+    queryFn: fetchMetadata,
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
@@ -30,7 +32,7 @@ export function DataFreshness() {
     return null;
   }
 
-  const lastFetchedAt = new Date(data.lastFetchedAt);
+  const lastFetchedAt = new Date(data.lastGenerated);
   const now = new Date();
   const ageInMinutes = (now.getTime() - lastFetchedAt.getTime()) / (1000 * 60);
 
