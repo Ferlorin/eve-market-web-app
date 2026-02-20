@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - feat/static-cache  # Auto-deploy when pushing to this branch
+      - feat/static-cache  # Auto-deploy preview when pushing to this branch
 
 jobs:
   # PHASE 1: Fetch data and save to JSON artifacts (NO DATABASE OPERATIONS)
