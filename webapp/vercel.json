@@ -4,5 +4,24 @@
       "path": "/api/cron/cleanup",
       "schedule": "0 2 * * *"
     }
+  ],
+  "headers": [
+    {
+      "source": "/data/(.*).json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=1800, s-maxage=1800, stale-while-revalidate=300"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, OPTIONS"
+        }
+      ]
+    }
   ]
 }

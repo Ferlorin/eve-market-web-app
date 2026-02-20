@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { RegionSelector } from '@/components/RegionSelector';
 import { DataFreshness } from '@/components/DataFreshness';
-import { StaleDataBanner } from '@/components/StaleDataBanner';
+import { FreshDataNotification } from '@/components/FreshDataNotification';
 import { OpportunityTable } from '@/components/OpportunityTable';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
@@ -16,6 +16,7 @@ export default function HomePage() {
   const [buyMarket, setBuyMarket] = useState<Region | null>(null);
   const [sellMarket, setSellMarket] = useState<Region | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [currentDataTimestamp, setCurrentDataTimestamp] = useState<string | null>(null);
 
   // Swap buy and sell markets
   const handleSwapMarkets = () => {
@@ -35,12 +36,22 @@ export default function HomePage() {
       : null;
 
   const {
-    data: opportunities,
+    data: opportunitiesResponse,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
     refetch: refetchOpportunities,
     isFetching: opportunitiesFetching,
   } = useOpportunities(opportunitiesParams);
+
+  // Extract opportunities array from response
+  const opportunities = opportunitiesResponse?.opportunities || [];
+
+  // Track current data timestamp for freshness notification
+  useEffect(() => {
+    if (opportunitiesResponse?.meta?.lastUpdated) {
+      setCurrentDataTimestamp(opportunitiesResponse.meta.lastUpdated);
+    }
+  }, [opportunitiesResponse]);
 
   // Validate market selection
   useEffect(() => {
@@ -68,8 +79,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen theme-bg-primary">
-      {/* Stale Data Warning Banner */}
-      <StaleDataBanner />
+      {/* Fresh Data Notification */}
+      <FreshDataNotification currentDataTimestamp={currentDataTimestamp} />
 
       {/* Header */}
       <header className="border-b theme-border theme-bg-secondary">

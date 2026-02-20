@@ -29,3 +29,8 @@ postgres_data/
 .agents/
 .claude/skills/
 .claude/settings.local.json
+
+# Market Data - CRITICAL: Never commit to git (CCP compliance)
+webapp/public/data/*.json
+webapp/market-data-artifacts/*.json
+market-data-artifacts/
