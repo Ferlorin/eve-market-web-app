@@ -8,6 +8,7 @@ import { ClockIcon } from '@heroicons/react/24/outline';
 
 interface MetadataResponse {
   lastGenerated: string;
+  deploymentVersion: string;
   regionPairs: number;
   regions: number;
   skippedPairs: number;

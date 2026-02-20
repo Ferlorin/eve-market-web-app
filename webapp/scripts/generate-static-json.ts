@@ -326,6 +326,7 @@ async function generateStaticJSON() {
   // Generate metadata file
   const metadata = {
     lastGenerated: new Date().toISOString(),
+    deploymentVersion: Date.now().toString(), // Unique version for each deployment
     regionPairs: generatedCount,
     regions: regionDataMap.size,
     skippedPairs: skippedCount,

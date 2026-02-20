@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { RegionSelector } from '@/components/RegionSelector';
 import { DataFreshness } from '@/components/DataFreshness';
 import { FreshDataNotification } from '@/components/FreshDataNotification';
 import { NoDataYetBanner } from '@/components/NoDataYetBanner';
+import { AutoRefreshBanner } from '@/components/AutoRefreshBanner';
 import { OpportunityTable } from '@/components/OpportunityTable';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
@@ -14,6 +16,8 @@ import { useQuery } from '@tanstack/react-query';
 import type { Region } from '@/lib/regions';
 
 export default function HomePage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { data: regions, isLoading } = useRegions();
   const [buyMarket, setBuyMarket] = useState<Region | null>(null);
   const [sellMarket, setSellMarket] = useState<Region | null>(null);
@@ -33,6 +37,35 @@ export default function HomePage() {
   });
 
   const hasData = !!metadata;
+
+  // Restore region selections from URL params on mount
+  useEffect(() => {
+    if (!regions) return;
+
+    const buyRegionId = searchParams.get('buy');
+    const sellRegionId = searchParams.get('sell');
+
+    if (buyRegionId && !buyMarket) {
+      const region = regions.find(r => r.regionId === parseInt(buyRegionId));
+      if (region) setBuyMarket(region);
+    }
+
+    if (sellRegionId && !sellMarket) {
+      const region = regions.find(r => r.regionId === parseInt(sellRegionId));
+      if (region) setSellMarket(region);
+    }
+  }, [regions, searchParams, buyMarket, sellMarket]);
+
+  // Update URL when regions change
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (buyMarket) params.set('buy', buyMarket.regionId.toString());
+    if (sellMarket) params.set('sell', sellMarket.regionId.toString());
+
+    const newUrl = params.toString() ? `?${params.toString()}` : '/';
+    router.replace(newUrl, { scroll: false });
+  }, [buyMarket, sellMarket, router]);
 
   // Swap buy and sell markets
   const handleSwapMarkets = () => {
@@ -95,6 +128,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen theme-bg-primary">
+      {/* Auto-refresh banner (detects new deployments) */}
+      <AutoRefreshBanner />
+
       {/* No Data Yet Banner */}
       <NoDataYetBanner />
 

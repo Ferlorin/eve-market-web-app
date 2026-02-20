@@ -50,6 +50,33 @@ export function OpportunityTable({ data, onRefresh, isRefreshing = false }: Oppo
   const [debouncedMinMaxProfit, setDebouncedMinMaxProfit] = useState<string>('');
   const [debouncedMinROI, setDebouncedMinROI] = useState<string>('');
 
+  // Restore table state from localStorage on mount
+  useEffect(() => {
+    const savedSortColumn = localStorage.getItem('table-sort-column');
+    const savedSortDirection = localStorage.getItem('table-sort-direction');
+    const savedMinMaxProfit = localStorage.getItem('table-min-max-profit');
+    const savedMinROI = localStorage.getItem('table-min-roi');
+
+    if (savedSortColumn) setSortColumn(savedSortColumn as SortColumn);
+    if (savedSortDirection) setSortDirection(savedSortDirection as SortDirection);
+    if (savedMinMaxProfit) setMinMaxProfit(savedMinMaxProfit);
+    if (savedMinROI) setMinROI(savedMinROI);
+  }, []);
+
+  // Save table state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('table-sort-column', sortColumn);
+    localStorage.setItem('table-sort-direction', sortDirection);
+  }, [sortColumn, sortDirection]);
+
+  useEffect(() => {
+    localStorage.setItem('table-min-max-profit', minMaxProfit);
+  }, [minMaxProfit]);
+
+  useEffect(() => {
+    localStorage.setItem('table-min-roi', minROI);
+  }, [minROI]);
+
   // Reset filters when region changes (new data loaded)
   const dataRef = useRef(data);
   useEffect(() => {
