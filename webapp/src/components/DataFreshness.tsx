@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
@@ -22,11 +23,21 @@ async function fetchMetadata(): Promise<MetadataResponse> {
 }
 
 export function DataFreshness() {
+  const [, setTick] = useState(0);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['metadata'],
     queryFn: fetchMetadata,
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    refetchInterval: 60 * 1000, // Refetch every minute to get fresh data
   });
+
+  // Force re-render every 10 seconds to update relative time display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(tick => tick + 1);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (isLoading || error || !data) {
     return null;
