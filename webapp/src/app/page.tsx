@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { RegionSelector } from '@/components/RegionSelector';
 import { DataFreshness } from '@/components/DataFreshness';
@@ -15,7 +15,7 @@ import { useOpportunities } from '@/lib/queries/opportunities';
 import { useQuery } from '@tanstack/react-query';
 import type { Region } from '@/lib/regions';
 
-export default function HomePage() {
+function HomePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: regions, isLoading } = useRegions();
@@ -344,5 +344,20 @@ export default function HomePage() {
       {/* Footer with Data Freshness */}
       <DataFreshness />
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen theme-bg-primary flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-eve-blue mb-4"></div>
+          <p className="theme-text-secondary">Loading...</p>
+        </div>
+      </div>
+    }>
+      <HomePageContent />
+    </Suspense>
   );
 }
