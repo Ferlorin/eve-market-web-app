@@ -2,11 +2,10 @@ name: Fetch and Deploy Static (Static-Cache Architecture)
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Every 30 minutes
+    - cron: '*/15 * * * *'  # Every 15 minutes
   workflow_dispatch:
-  push:
-    branches:
-      - main  # Auto-deploy to production when pushing to main
+  # Removed push trigger to reduce deployments and avoid hitting Vercel free tier limits
+  # Use workflow_dispatch (manual trigger) for deploying code changes
 
 jobs:
   # PHASE 1: Fetch data and save to JSON artifacts (NO DATABASE OPERATIONS)
