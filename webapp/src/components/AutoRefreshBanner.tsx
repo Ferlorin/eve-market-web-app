@@ -12,8 +12,9 @@ interface MetadataResponse {
 }
 
 async function fetchMetadata(): Promise<MetadataResponse> {
-  const response = await fetch('/data/metadata.json', {
-    cache: 'no-store', // Always fetch fresh to detect new deployments
+  // Cache-bust with timestamp to bypass both browser and CDN cache
+  const response = await fetch(`/data/metadata.json?t=${Date.now()}`, {
+    cache: 'no-store',
   });
   if (!response.ok) {
     throw new Error('Failed to fetch metadata');
