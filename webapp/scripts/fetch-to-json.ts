@@ -26,6 +26,11 @@ async function main() {
     ? process.env.SPECIFIC_REGIONS.split(',').map(r => parseInt(r.trim(), 10))
     : undefined;
 
+  // Support page-range splitting for large regions (e.g. The Forge)
+  const pageStart = process.env.PAGE_START ? parseInt(process.env.PAGE_START, 10) : 1;
+  const pageEnd = process.env.PAGE_END ? parseInt(process.env.PAGE_END, 10) : Infinity;
+  const partIndex = process.env.PART_INDEX ? parseInt(process.env.PART_INDEX, 10) : undefined;
+
   // Create artifacts directory
   const artifactsDir = path.join(process.cwd(), 'market-data-artifacts');
   if (!fs.existsSync(artifactsDir)) {
@@ -75,7 +80,7 @@ async function main() {
     // Process regions sequentially to avoid memory issues
     for (const regionId of regionIds) {
       try {
-        await fetchRegionToJson(regionId, artifactsDir);
+        await fetchRegionToJson(regionId, artifactsDir, 3, pageStart, pageEnd, partIndex);
         successful++;
       } catch (error) {
         logger.error({
@@ -114,7 +119,14 @@ async function main() {
   }
 }
 
-async function fetchRegionToJson(regionId: number, artifactsDir: string, maxRetries = 3): Promise<void> {
+async function fetchRegionToJson(
+  regionId: number,
+  artifactsDir: string,
+  maxRetries = 3,
+  pageStart = 1,
+  pageEnd = Infinity,
+  partIndex?: number
+): Promise<void> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -129,7 +141,7 @@ async function fetchRegionToJson(regionId: number, artifactsDir: string, maxRetr
         issued: string;
       }> = [];
 
-      let page = 1;
+      let page = pageStart;
       let hasMorePages = true;
 
       while (hasMorePages) {
@@ -139,12 +151,14 @@ async function fetchRegionToJson(regionId: number, artifactsDir: string, maxRetr
           allOrders.push(...orders);
         }
 
-        hasMorePages = page < totalPages;
+        hasMorePages = page < totalPages && page < pageEnd;
         page++;
       }
 
-      // Save to JSON file
-      const filename = `region-${regionId}.json`;
+      // Save to JSON file - use part suffix if splitting a region
+      const filename = partIndex !== undefined
+        ? `region-${regionId}-part${partIndex}.json`
+        : `region-${regionId}.json`;
       const filepath = path.join(artifactsDir, filename);
 
       const data = {

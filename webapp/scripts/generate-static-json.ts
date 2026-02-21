@@ -83,26 +83,51 @@ function loadRegionData(artifactsDir: string): Map<number, RegionData> {
     throw new Error(`Artifacts directory not found: ${artifactsDir}`);
   }
 
-  const files = fs.readdirSync(artifactsDir).filter(f => f.endsWith('.json'));
+  const allFiles = fs.readdirSync(artifactsDir).filter(f => f.endsWith('.json'));
+
+  // Separate full region files from part files
+  const fullFiles = allFiles.filter(f => !f.includes('-part'));
+  const partFiles = allFiles.filter(f => f.includes('-part'));
 
   logger.info({
     event: 'loading_artifacts',
-    filesFound: files.length,
+    filesFound: allFiles.length,
+    fullFiles: fullFiles.length,
+    partFiles: partFiles.length,
   });
 
-  for (const file of files) {
+  // Load full region files
+  for (const file of fullFiles) {
     const filepath = path.join(artifactsDir, file);
     const content = fs.readFileSync(filepath, 'utf-8');
     const data: RegionData = JSON.parse(content);
-
     regionDataMap.set(data.regionId, data);
-
-    logger.debug({
-      event: 'artifact_loaded',
-      regionId: data.regionId,
-      orderCount: data.orderCount,
-    });
+    logger.debug({ event: 'artifact_loaded', regionId: data.regionId, orderCount: data.orderCount });
   }
+
+  // Group part files by regionId and merge them
+  const partsByRegion = new Map<number, RegionData[]>();
+  for (const file of partFiles) {
+    const filepath = path.join(artifactsDir, file);
+    const content = fs.readFileSync(filepath, 'utf-8');
+    const data: RegionData = JSON.parse(content);
+    const parts = partsByRegion.get(data.regionId) || [];
+    parts.push(data);
+    partsByRegion.set(data.regionId, parts);
+  }
+
+  // Merge parts into single RegionData per region
+  partsByRegion.forEach((parts, regionId) => {
+    const mergedOrders = parts.flatMap(p => p.orders);
+    const merged: RegionData = {
+      regionId,
+      fetchedAt: parts[0].fetchedAt,
+      orderCount: mergedOrders.length,
+      orders: mergedOrders,
+    };
+    regionDataMap.set(regionId, merged);
+    logger.info({ event: 'parts_merged', regionId, parts: parts.length, totalOrders: mergedOrders.length });
+  });
 
   return regionDataMap;
 }

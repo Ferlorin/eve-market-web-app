@@ -10,20 +10,59 @@ on:
   # Use workflow_dispatch (manual trigger) for deploying code changes
 
 jobs:
-  # PHASE 1: Fetch data and save to JSON artifacts (NO DATABASE OPERATIONS)
-  # High-volume regions processed separately
+  # PHASE 1a: The Forge split into 2 parallel jobs (444k orders - heaviest region)
+  fetch-forge-split:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15  # Each part is ~half the work (~225 pages)
+    strategy:
+      matrix:
+        part:
+          - { index: '0', page_start: '1',   page_end: '225' }
+          - { index: '1', page_start: '226',  page_end: '500' }
+      fail-fast: false
+      max-parallel: 2
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: webapp
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Fetch The Forge pages ${{ matrix.part.page_start }}-${{ matrix.part.page_end }} (part ${{ matrix.part.index }})
+        working-directory: webapp
+        run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-to-json.ts
+        env:
+          SPECIFIC_REGIONS: '10000002'
+          PAGE_START: ${{ matrix.part.page_start }}
+          PAGE_END: ${{ matrix.part.page_end }}
+          PART_INDEX: ${{ matrix.part.index }}
+
+      - name: Upload Forge part ${{ matrix.part.index }} artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-data-region-10000002-part${{ matrix.part.index }}
+          path: webapp/market-data-artifacts/region-10000002-part${{ matrix.part.index }}.json
+          retention-days: 1
+
+  # PHASE 1b: Other high-volume regions (Domain, Metropolis, Sinq Laison)
   fetch-high-volume-json:
     runs-on: ubuntu-latest
-    timeout-minutes: 20  # Increased for The Forge (444k orders)
+    timeout-minutes: 20
     strategy:
       matrix:
         region:
-          - { id: '10000002', name: 'The Forge', orders: '444k' }
           - { id: '10000043', name: 'Domain', orders: '196k' }
           - { id: '10000042', name: 'Metropolis', orders: '127k' }
           - { id: '10000032', name: 'Sinq Laison', orders: '124k' }
       fail-fast: false
-      max-parallel: 8  # Increased from 4 (GitHub free tier supports up to 20)
+      max-parallel: 8
 
     steps:
       - uses: actions/checkout@v4
@@ -91,7 +130,7 @@ jobs:
   # PHASE 2: Generate static JSON files and deploy to Vercel
   # NO DATABASE - Pure static file generation
   generate-and-deploy:
-    needs: [fetch-high-volume-json, fetch-chunks-json]
+    needs: [fetch-forge-split, fetch-high-volume-json, fetch-chunks-json]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
