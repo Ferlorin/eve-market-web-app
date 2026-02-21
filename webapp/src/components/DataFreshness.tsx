@@ -16,7 +16,7 @@ interface MetadataResponse {
 }
 
 async function fetchMetadata(): Promise<MetadataResponse> {
-  const response = await fetch('/data/metadata.json');
+  const response = await fetch('/data/metadata.json', { cache: 'no-store' });
   if (!response.ok) {
     throw new Error('Failed to fetch metadata');
   }

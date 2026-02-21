@@ -28,7 +28,7 @@ function HomePageContent() {
   const { data: metadata } = useQuery({
     queryKey: ['metadata-availability'],
     queryFn: async () => {
-      const res = await fetch('/data/metadata.json');
+      const res = await fetch('/data/metadata.json', { cache: 'no-store' });
       if (!res.ok) return null;
       return res.json();
     },
