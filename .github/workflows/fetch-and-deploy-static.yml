@@ -18,7 +18,7 @@ jobs:
       matrix:
         part:
           - { index: '0', page_start: '1',   page_end: '225' }
-          - { index: '1', page_start: '226',  page_end: '500' }
+          - { index: '1', page_start: '226' }   # No page_end - always fetches to real end
       fail-fast: false
       max-parallel: 2
 
@@ -35,13 +35,13 @@ jobs:
         working-directory: webapp
         run: npm ci --prefer-offline --no-audit
 
-      - name: Fetch The Forge pages ${{ matrix.part.page_start }}-${{ matrix.part.page_end }} (part ${{ matrix.part.index }})
+      - name: Fetch The Forge pages ${{ matrix.part.page_start }}-end (part ${{ matrix.part.index }})
         working-directory: webapp
         run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-to-json.ts
         env:
           SPECIFIC_REGIONS: '10000002'
           PAGE_START: ${{ matrix.part.page_start }}
-          PAGE_END: ${{ matrix.part.page_end }}
+          PAGE_END: ${{ matrix.part.page_end }}   # Empty for part 1 → defaults to Infinity
           PART_INDEX: ${{ matrix.part.index }}
 
       - name: Upload Forge part ${{ matrix.part.index }} artifact
@@ -59,7 +59,7 @@ jobs:
       matrix:
         part:
           - { index: '0', page_start: '1',   page_end: '100' }
-          - { index: '1', page_start: '101',  page_end: '250' }
+          - { index: '1', page_start: '101' }   # No page_end - always fetches to real end
       fail-fast: false
       max-parallel: 2
 
@@ -76,13 +76,13 @@ jobs:
         working-directory: webapp
         run: npm ci --prefer-offline --no-audit
 
-      - name: Fetch Domain pages ${{ matrix.part.page_start }}-${{ matrix.part.page_end }} (part ${{ matrix.part.index }})
+      - name: Fetch Domain pages ${{ matrix.part.page_start }}-end (part ${{ matrix.part.index }})
         working-directory: webapp
         run: node --max-old-space-size=3072 --expose-gc --no-warnings ./node_modules/tsx/dist/cli.mjs scripts/fetch-to-json.ts
         env:
           SPECIFIC_REGIONS: '10000043'
           PAGE_START: ${{ matrix.part.page_start }}
-          PAGE_END: ${{ matrix.part.page_end }}
+          PAGE_END: ${{ matrix.part.page_end }}   # Empty for part 1 → defaults to Infinity
           PART_INDEX: ${{ matrix.part.index }}
 
       - name: Upload Domain part ${{ matrix.part.index }} artifact

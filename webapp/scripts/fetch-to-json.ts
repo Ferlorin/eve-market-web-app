@@ -145,7 +145,27 @@ async function fetchRegionToJson(
       let hasMorePages = true;
 
       while (hasMorePages) {
-        const { orders, totalPages } = await esiClient.getRegionOrdersPage(regionId, page);
+        let orders: Awaited<ReturnType<typeof esiClient.getRegionOrdersPage>>['orders'];
+        let totalPages: number;
+
+        try {
+          const result = await esiClient.getRegionOrdersPage(regionId, page);
+          orders = result.orders;
+          totalPages = result.totalPages;
+        } catch (error) {
+          // 404 means page is beyond total pages - this range has no data, exit gracefully
+          if (error instanceof ESIError && error.statusCode === 404) {
+            logger.warn({
+              event: 'page_range_empty',
+              regionId,
+              page,
+              pageStart,
+              message: 'Page beyond totalPages - range exhausted, stopping',
+            });
+            break;
+          }
+          throw error; // Re-throw all other errors
+        }
 
         if (orders.length > 0) {
           allOrders.push(...orders);
