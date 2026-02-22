@@ -102,8 +102,16 @@ export function DataFreshness() {
           </span>
         </div>
 
-        <div className="text-xs theme-text-secondary">
-          {formattedTime}
+        <div className="text-right">
+          <div className="text-xs theme-text-secondary">{formattedTime}</div>
+          {process.env.NEXT_PUBLIC_COMMIT_SHA && (
+            <div
+              className="text-xs theme-text-secondary opacity-40 mt-0.5"
+              title={process.env.NEXT_PUBLIC_COMMIT_MESSAGE}
+            >
+              v{process.env.NEXT_PUBLIC_COMMIT_SHA}
+            </div>
+          )}
         </div>
       </div>
     </footer>
