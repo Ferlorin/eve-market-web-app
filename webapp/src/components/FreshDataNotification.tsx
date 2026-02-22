@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
+import { metadataUrl } from '@/lib/data-url';
 
 interface MetadataResponse {
   lastGenerated: string;
@@ -12,7 +13,7 @@ interface MetadataResponse {
 }
 
 async function fetchMetadata(): Promise<MetadataResponse> {
-  const response = await fetch('/data/metadata.json');
+  const response = await fetch(metadataUrl(), { cache: 'no-store' });
   if (!response.ok) {
     throw new Error('Failed to fetch metadata');
   }
@@ -35,68 +36,52 @@ export function FreshDataNotification({ currentDataTimestamp }: FreshDataNotific
     retry: 3,
   });
 
-  // Reset dismissed state when metadata timestamp changes
+  // Auto-refresh data when new data is detected
   useEffect(() => {
-    setDismissed(false);
-  }, [metadata?.lastGenerated]);
+    if (!currentDataTimestamp || !metadata || dismissed) return;
+    const currentDate = new Date(currentDataTimestamp);
+    const latestDate = new Date(metadata.lastGenerated);
+    if (latestDate > currentDate) {
+      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      setDismissed(false); // show the toast
+      // Auto-dismiss after 3 seconds
+      const timer = setTimeout(() => setDismissed(true), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [metadata?.lastGenerated, currentDataTimestamp]);
 
   // Don't show if no current data timestamp or metadata not loaded
   if (!currentDataTimestamp || isLoading || error || !metadata || dismissed) {
     return null;
   }
 
-  // Check if new data is available
   const currentDate = new Date(currentDataTimestamp);
   const latestDate = new Date(metadata.lastGenerated);
-  const hasNewData = latestDate > currentDate;
-
-  if (!hasNewData) {
-    return null;
-  }
-
-  const handleRefresh = () => {
-    // Invalidate opportunities query to trigger refetch
-    queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-    setDismissed(true);
-  };
+  if (!(latestDate > currentDate)) return null;
 
   return (
     <div
       className="w-full px-4 py-3 bg-eve-blue/20 border-b-2 border-eve-blue"
-      role="alert"
+      role="status"
       aria-live="polite"
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1">
           <ArrowPathIcon
-            className="h-6 w-6 text-eve-blue animate-spin flex-shrink-0"
+            className="h-5 w-5 text-eve-blue animate-spin flex-shrink-0"
             aria-hidden="true"
           />
-          <div>
-            <p className="text-sm font-medium text-eve-blue">
-              Fresh market data available!
-            </p>
-            <p className="text-xs text-gray-300 mt-0.5">
-              New opportunities have been calculated. Click refresh to see the latest data.
-            </p>
-          </div>
+          <p className="text-sm font-medium text-eve-blue">
+            Market data updated — loading fresh opportunities...
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            className="px-4 py-2 bg-eve-blue text-white rounded-lg hover:bg-eve-blue/90 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-eve-blue focus:ring-offset-2"
-            aria-label="Refresh to load new data"
-          >
-            Refresh Now
-          </button>
-          <button
-            onClick={() => setDismissed(true)}
-            className="p-1 rounded hover:bg-black/20 transition-colors focus:outline-none focus:ring-2 focus:ring-eve-blue focus:ring-offset-2"
-            aria-label="Dismiss notification"
-          >
-            <XMarkIcon className="h-5 w-5 text-eve-blue" />
-          </button>
-        </div>
+        <button
+          onClick={() => setDismissed(true)}
+          className="p-1 rounded hover:bg-black/20 transition-colors"
+          aria-label="Dismiss"
+        >
+          <XMarkIcon className="h-4 w-4 text-eve-blue" />
+        </button>
       </div>
     </div>
   );

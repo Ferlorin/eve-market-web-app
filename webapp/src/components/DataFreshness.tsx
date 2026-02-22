@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import { ClockIcon } from '@heroicons/react/24/outline';
+import { metadataUrl } from '@/lib/data-url';
 
 interface MetadataResponse {
   lastGenerated: string;
@@ -16,8 +17,7 @@ interface MetadataResponse {
 }
 
 async function fetchMetadata(): Promise<MetadataResponse> {
-  // Cache-bust with timestamp to bypass both browser and CDN cache
-  const response = await fetch(`/data/metadata.json?t=${Date.now()}`, { cache: 'no-store' });
+  const response = await fetch(metadataUrl(), { cache: 'no-store' });
   if (!response.ok) {
     throw new Error('Failed to fetch metadata');
   }
@@ -102,8 +102,16 @@ export function DataFreshness() {
           </span>
         </div>
 
-        <div className="text-xs theme-text-secondary">
-          {formattedTime}
+        <div className="text-right">
+          <div className="text-xs theme-text-secondary">{formattedTime}</div>
+          {process.env.NEXT_PUBLIC_COMMIT_SHA && (
+            <div
+              className="text-xs theme-text-secondary opacity-40 mt-0.5"
+              title={process.env.NEXT_PUBLIC_COMMIT_MESSAGE}
+            >
+              v{process.env.NEXT_PUBLIC_COMMIT_SHA}
+            </div>
+          )}
         </div>
       </div>
     </footer>

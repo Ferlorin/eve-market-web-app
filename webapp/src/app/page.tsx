@@ -6,7 +6,6 @@ import { RegionSelector } from '@/components/RegionSelector';
 import { DataFreshness } from '@/components/DataFreshness';
 import { FreshDataNotification } from '@/components/FreshDataNotification';
 import { NoDataYetBanner } from '@/components/NoDataYetBanner';
-import { AutoRefreshBanner } from '@/components/AutoRefreshBanner';
 import { OpportunityTable } from '@/components/OpportunityTable';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
@@ -14,6 +13,7 @@ import { useRegions } from '@/lib/queries/regions';
 import { useOpportunities } from '@/lib/queries/opportunities';
 import { useQuery } from '@tanstack/react-query';
 import type { Region } from '@/lib/regions';
+import { metadataUrl } from '@/lib/data-url';
 
 function HomePageContent() {
   const searchParams = useSearchParams();
@@ -28,8 +28,7 @@ function HomePageContent() {
   const { data: metadata } = useQuery({
     queryKey: ['metadata-availability'],
     queryFn: async () => {
-      // Cache-bust with timestamp to bypass both browser and CDN cache
-      const res = await fetch(`/data/metadata.json?t=${Date.now()}`, { cache: 'no-store' });
+      const res = await fetch(metadataUrl(), { cache: 'no-store' });
       if (!res.ok) return null;
       return res.json();
     },
@@ -129,9 +128,6 @@ function HomePageContent() {
 
   return (
     <div className="min-h-screen theme-bg-primary">
-      {/* Auto-refresh banner (detects new deployments) */}
-      <AutoRefreshBanner />
-
       {/* No Data Yet Banner */}
       <NoDataYetBanner />
 

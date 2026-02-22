@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { Opportunity } from '@/components/OpportunityTable';
+import { dataUrl } from '@/lib/data-url';
 
 interface OpportunitiesParams {
   buyRegion: number;
@@ -25,7 +26,7 @@ async function fetchOpportunities(
   params: OpportunitiesParams
 ): Promise<OpportunitiesResponse> {
   // Fetch from static JSON file: /data/{buyRegion}-{sellRegion}.json
-  const response = await fetch(`/data/${params.buyRegion}-${params.sellRegion}.json`);
+  const response = await fetch(dataUrl(`${params.buyRegion}-${params.sellRegion}.json`));
 
   if (!response.ok) {
     if (response.status === 404) {
