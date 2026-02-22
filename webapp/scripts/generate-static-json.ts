@@ -76,6 +76,56 @@ async function fetchRegionName(regionId: number): Promise<string> {
 }
 
 /**
+ * Fetch item name from ESI
+ */
+async function fetchTypeName(typeId: number): Promise<string> {
+  try {
+    const res = await fetch(`https://esi.evetech.net/latest/universe/types/${typeId}/`);
+    if (!res.ok) return `Item ${typeId}`;
+    const data = await res.json() as { name?: string };
+    return data.name ?? `Item ${typeId}`;
+  } catch {
+    return `Item ${typeId}`;
+  }
+}
+
+/**
+ * Fetch station or structure name from ESI
+ */
+async function fetchLocationName(locationId: number): Promise<string> {
+  try {
+    if (locationId < 100_000_000) {
+      // NPC station
+      const res = await fetch(`https://esi.evetech.net/latest/universe/stations/${locationId}/`);
+      if (!res.ok) return `Station ${locationId}`;
+      const data = await res.json() as { name?: string };
+      return data.name ?? `Station ${locationId}`;
+    } else {
+      // Player structure (citadel) — may be private (403)
+      const res = await fetch(`https://esi.evetech.net/latest/universe/structures/${locationId}/`);
+      if (!res.ok) return `Station ${locationId}`;
+      const data = await res.json() as { name?: string };
+      return data.name ?? `Station ${locationId}`;
+    }
+  } catch {
+    return `Station ${locationId}`;
+  }
+}
+
+/**
+ * Run async tasks with a concurrency limit
+ */
+async function resolveInBatches<T>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<void>
+): Promise<void> {
+  for (let i = 0; i < items.length; i += concurrency) {
+    await Promise.all(items.slice(i, i + concurrency).map(fn));
+  }
+}
+
+/**
  * Load all region data from JSON artifacts
  */
 function loadRegionData(artifactsDir: string): Map<number, RegionData> {
@@ -280,6 +330,47 @@ async function generateStaticJSON() {
   let generatedCount = 0;
   let skippedCount = 0;
 
+  // --- Pass 1: collect all unique typeIds and locationIds across top-1000 per pair ---
+  console.log('\nPass 1: collecting unique item and station IDs...');
+  const allTypeIds = new Set<number>();
+  const allLocationIds = new Set<number>();
+
+  for (const buyRegionId of qualifyingIds) {
+    for (const sellRegionId of qualifyingIds) {
+      if (buyRegionId === sellRegionId) continue;
+      const opps = calculateOpportunitiesFromMaps(
+        regionPriceMaps.get(buyRegionId)!,
+        regionPriceMaps.get(sellRegionId)!
+      ).slice(0, 1000);
+      for (const opp of opps) {
+        allTypeIds.add(opp.typeId);
+        allLocationIds.add(opp.buyLocationId);
+        allLocationIds.add(opp.sellLocationId);
+      }
+    }
+  }
+
+  console.log(`  → ${allTypeIds.size} unique items, ${allLocationIds.size} unique stations`);
+
+  // --- Resolve names from ESI in parallel (20 concurrent requests) ---
+  const typeNames = new Map<number, string>();
+  const locationNames = new Map<number, string>();
+
+  console.log(`\nResolving ${allTypeIds.size} item names from ESI...`);
+  await resolveInBatches([...allTypeIds], 20, async (typeId) => {
+    typeNames.set(typeId, await fetchTypeName(typeId));
+  });
+
+  console.log(`Resolving ${allLocationIds.size} station names from ESI...`);
+  await resolveInBatches([...allLocationIds], 20, async (locationId) => {
+    locationNames.set(locationId, await fetchLocationName(locationId));
+  });
+
+  console.log('✅ Names resolved.');
+
+  // --- Pass 2: write output files with resolved names ---
+  console.log('\nPass 2: writing opportunity files...');
+
   for (const buyRegionId of qualifyingIds) {
     for (const sellRegionId of qualifyingIds) {
       if (buyRegionId === sellRegionId) continue;
@@ -292,12 +383,12 @@ async function generateStaticJSON() {
 
       const outputOpportunities: Opportunity[] = topOpportunities.map(opp => ({
         typeId: opp.typeId,
-        itemName: `Item ${opp.typeId}`,
+        itemName: typeNames.get(opp.typeId) ?? `Item ${opp.typeId}`,
         buyPrice: opp.buyPrice,
         sellPrice: opp.sellPrice,
         profitPerUnit: opp.profitPerUnit,
-        buyStation: `Station ${opp.buyLocationId}`,
-        sellStation: `Station ${opp.sellLocationId}`,
+        buyStation: locationNames.get(opp.buyLocationId) ?? `Station ${opp.buyLocationId}`,
+        sellStation: locationNames.get(opp.sellLocationId) ?? `Station ${opp.sellLocationId}`,
         roi: opp.roi,
         volumeAvailable: opp.volumeAvailable,
         maxProfit: opp.maxProfit,

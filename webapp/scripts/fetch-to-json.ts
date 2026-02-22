@@ -141,38 +141,42 @@ async function fetchRegionToJson(
         issued: string;
       }> = [];
 
-      let page = pageStart;
-      let hasMorePages = true;
+      const PAGE_CONCURRENCY = 10; // fetch 10 pages at once
 
-      while (hasMorePages) {
-        let orders: Awaited<ReturnType<typeof esiClient.getRegionOrdersPage>>['orders'];
-        let totalPages: number;
-
-        try {
-          const result = await esiClient.getRegionOrdersPage(regionId, page);
-          orders = result.orders;
-          totalPages = result.totalPages;
-        } catch (error) {
-          // 404 means page is beyond total pages - this range has no data, exit gracefully
-          if (error instanceof ESIError && error.statusCode === 404) {
-            logger.warn({
-              event: 'page_range_empty',
-              regionId,
-              page,
-              pageStart,
-              message: 'Page beyond totalPages - range exhausted, stopping',
-            });
-            break;
-          }
-          throw error; // Re-throw all other errors
+      // Fetch page 1 first to get totalPages
+      let totalPages: number;
+      try {
+        const first = await esiClient.getRegionOrdersPage(regionId, pageStart);
+        totalPages = Math.min(first.totalPages, pageEnd);
+        if (first.orders.length > 0) allOrders.push(...first.orders);
+      } catch (error) {
+        if (error instanceof ESIError && error.statusCode === 404) {
+          logger.warn({ event: 'page_range_empty', regionId, page: pageStart });
+          return;
         }
+        throw error;
+      }
 
-        if (orders.length > 0) {
-          allOrders.push(...orders);
+      // Fetch remaining pages in parallel batches
+      const remainingPages: number[] = [];
+      for (let p = pageStart + 1; p <= totalPages; p++) remainingPages.push(p);
+
+      for (let i = 0; i < remainingPages.length; i += PAGE_CONCURRENCY) {
+        const batch = remainingPages.slice(i, i + PAGE_CONCURRENCY);
+        const results = await Promise.all(
+          batch.map(async (page) => {
+            try {
+              const result = await esiClient.getRegionOrdersPage(regionId, page);
+              return result.orders;
+            } catch (error) {
+              if (error instanceof ESIError && error.statusCode === 404) return [];
+              throw error;
+            }
+          })
+        );
+        for (const orders of results) {
+          if (orders.length > 0) allOrders.push(...orders);
         }
-
-        hasMorePages = page < totalPages && page < pageEnd;
-        page++;
       }
 
       // Save to JSON file - use part suffix if splitting a region
