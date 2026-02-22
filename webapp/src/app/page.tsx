@@ -23,7 +23,6 @@ function HomePageContent() {
   const [buyMarket, setBuyMarket] = useState<Region | null>(null);
   const [sellMarket, setSellMarket] = useState<Region | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [currentDataTimestamp, setCurrentDataTimestamp] = useState<string | null>(null);
 
   // Check if metadata exists (data available)
   const { data: metadata } = useQuery({
@@ -96,13 +95,6 @@ function HomePageContent() {
   // Extract opportunities array from response
   const opportunities = opportunitiesResponse?.opportunities || [];
 
-  // Track current data timestamp for freshness notification
-  useEffect(() => {
-    if (opportunitiesResponse?.meta?.lastUpdated) {
-      setCurrentDataTimestamp(opportunitiesResponse.meta.lastUpdated);
-    }
-  }, [opportunitiesResponse]);
-
   // Validate market selection
   useEffect(() => {
     if (buyMarket && sellMarket) {
@@ -136,7 +128,7 @@ function HomePageContent() {
       <NoDataYetBanner />
 
       {/* Fresh Data Notification */}
-      <FreshDataNotification currentDataTimestamp={currentDataTimestamp} />
+      <FreshDataNotification />
 
       {/* Header */}
       <header className="border-b theme-border theme-bg-secondary">

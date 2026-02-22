@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import { metadataUrl } from '@/lib/data-url';
@@ -20,46 +20,43 @@ async function fetchMetadata(): Promise<MetadataResponse> {
   return response.json();
 }
 
-interface FreshDataNotificationProps {
-  currentDataTimestamp: string | null;
-}
-
-export function FreshDataNotification({ currentDataTimestamp }: FreshDataNotificationProps) {
+export function FreshDataNotification() {
+  const [newDataDetected, setNewDataDetected] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const queryClient = useQueryClient();
+  const prevLastGenerated = useRef<string | null>(null);
 
   // Poll metadata every 60 seconds to detect new data
-  const { data: metadata, isLoading, error } = useQuery({
+  const { data: metadata } = useQuery({
     queryKey: ['metadata'],
     queryFn: fetchMetadata,
     refetchInterval: 60000, // 1 minute
     retry: 3,
   });
 
-  // Auto-refresh data when new data is detected.
-  // Cache invalidation is ALWAYS done regardless of dismissed state —
-  // only the banner display is gated by dismissed.
+  // Detect when metadata.lastGenerated actually increases (new data published).
+  // Only fires when the timestamp changes during the session — not on region switches.
   useEffect(() => {
-    if (!currentDataTimestamp || !metadata) return;
-    const currentDate = new Date(currentDataTimestamp);
-    const latestDate = new Date(metadata.lastGenerated);
-    if (latestDate > currentDate) {
-      queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-      // Reset dismissed so the toast shows again for this new data event
-      setDismissed(false);
-      const timer = setTimeout(() => setDismissed(true), 3000);
-      return () => clearTimeout(timer);
+    if (!metadata?.lastGenerated) return;
+
+    if (prevLastGenerated.current !== null) {
+      const prev = new Date(prevLastGenerated.current);
+      const latest = new Date(metadata.lastGenerated);
+      if (latest > prev) {
+        // New data was published — refresh table and show banner
+        queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+        setNewDataDetected(true);
+        setDismissed(false);
+        const timer = setTimeout(() => setDismissed(true), 3000);
+        prevLastGenerated.current = metadata.lastGenerated;
+        return () => clearTimeout(timer);
+      }
     }
-  }, [metadata?.lastGenerated, currentDataTimestamp]);
 
-  // Don't show if no current data timestamp or metadata not loaded
-  if (!currentDataTimestamp || isLoading || error || !metadata || dismissed) {
-    return null;
-  }
+    prevLastGenerated.current = metadata.lastGenerated;
+  }, [metadata?.lastGenerated]);
 
-  const currentDate = new Date(currentDataTimestamp);
-  const latestDate = new Date(metadata.lastGenerated);
-  if (!(latestDate > currentDate)) return null;
+  if (!newDataDetected || dismissed) return null;
 
   return (
     <div
