@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 function getGitInfo(): { sha: string; message: string } {
   try {
@@ -12,6 +14,11 @@ function getGitInfo(): { sha: string; message: string } {
 }
 
 const { sha, message } = getGitInfo();
+
+// Write version.json to public/ so it's served as a static asset.
+// The app polls this to detect new deployments without a full-page reload.
+const versionFile = path.join(process.cwd(), 'public', 'version.json');
+fs.writeFileSync(versionFile, JSON.stringify({ sha }, null, 2));
 
 const nextConfig: NextConfig = {
   output: 'export',

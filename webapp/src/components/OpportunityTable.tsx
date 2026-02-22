@@ -2,7 +2,7 @@
 
 import { useRef, useState, useMemo, useEffect } from 'react';
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/20/solid';
-import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, XMarkIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 
 const PAGE_SIZE = 10;
 
@@ -34,11 +34,13 @@ type SortDirection = 'asc' | 'desc';
 
 interface OpportunityTableProps {
   data: Opportunity[];
+  /** Changes when the user selects a different region pair; stable across data refreshes. */
+  regionKey?: string;
   onRefresh?: () => void;
   isRefreshing?: boolean;
 }
 
-export function OpportunityTable({ data, onRefresh, isRefreshing = false }: OpportunityTableProps) {
+export function OpportunityTable({ data, regionKey, onRefresh, isRefreshing = false }: OpportunityTableProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>('roi');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
@@ -78,17 +80,16 @@ export function OpportunityTable({ data, onRefresh, isRefreshing = false }: Oppo
     localStorage.setItem('table-min-roi', minROI);
   }, [minROI]);
 
-  // Reset filters when region changes (new data loaded)
-  const dataRef = useRef(data);
+  // Reset filters only when the region PAIR changes — not on data refreshes
+  const regionKeyRef = useRef(regionKey);
   useEffect(() => {
-    // Check if data reference changed (indicates region change)
-    if (dataRef.current !== data) {
+    if (regionKeyRef.current !== regionKey) {
       setMinMaxProfit('');
       setMinROI('');
       setDisplayCount(PAGE_SIZE);
-      dataRef.current = data;
+      regionKeyRef.current = regionKey;
     }
-  }, [data]);
+  }, [regionKey]);
 
   // Debounce filter inputs (300ms)
   useEffect(() => {
@@ -221,6 +222,18 @@ export function OpportunityTable({ data, onRefresh, isRefreshing = false }: Oppo
     ${sortColumn === column ? 'text-eve-blue' : 'theme-text-secondary hover:theme-text-primary'}
     focus:outline-none focus-visible:ring-2 focus-visible:ring-eve-blue rounded`;
 
+  // Info icon with native tooltip — works inside overflow:hidden containers
+  const ColInfo = ({ text }: { text: string }) => (
+    <span
+      className="inline-flex items-center ml-0.5 text-slate-500 hover:text-slate-300 cursor-help font-normal normal-case tracking-normal align-middle"
+      title={text}
+      onClick={(e) => e.stopPropagation()}
+      aria-label="Column information"
+    >
+      <InformationCircleIcon className="h-3.5 w-3.5" />
+    </span>
+  );
+
   if (data.length === 0) {
     return (
       <div className="w-full overflow-hidden rounded-lg border theme-border theme-bg-secondary">
@@ -339,147 +352,54 @@ export function OpportunityTable({ data, onRefresh, isRefreshing = false }: Oppo
       </div>
 
       {/* Fixed Table Header with Sortable Columns */}
-      <div 
+      <div
         className="border-b theme-border theme-bg-primary"
         role="rowgroup"
       >
-        <div
-          className="grid grid-cols-9 gap-4 px-4 py-3"
-          role="row"
-        >
-          <button
-            onClick={() => handleSort('itemName')}
-            className={headerButtonClass('itemName')}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'itemName'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
+        <div className="grid grid-cols-9 gap-4 px-4 py-3" role="row">
+          <button onClick={() => handleSort('itemName')} className={headerButtonClass('itemName')} role="columnheader" aria-sort={sortColumn === 'itemName' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             Item <SortIcon column="itemName" />
+            <ColInfo text="The item being traded." />
           </button>
 
-          <button
-            onClick={() => handleSort('buyStation')}
-            className={`${headerButtonClass('buyStation')} text-center`}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'buyStation'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
+          <button onClick={() => handleSort('buyStation')} className={`${headerButtonClass('buyStation')} text-center`} role="columnheader" aria-sort={sortColumn === 'buyStation' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             Buy Station <SortIcon column="buyStation" />
+            <ColInfo text="Where you buy the item — the station with the cheapest sell order." />
           </button>
 
-          <button
-            onClick={() => handleSort('sellStation')}
-            className={`${headerButtonClass('sellStation')} text-center`}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'sellStation'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
+          <button onClick={() => handleSort('sellStation')} className={`${headerButtonClass('sellStation')} text-center`} role="columnheader" aria-sort={sortColumn === 'sellStation' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             Sell Station <SortIcon column="sellStation" />
+            <ColInfo text="Where you sell the item after hauling it — the station with the highest buy order." />
           </button>
 
-          <button
-            onClick={() => handleSort('buyPrice')}
-            className={`${headerButtonClass('buyPrice')} text-right font-mono`}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'buyPrice'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
+          <button onClick={() => handleSort('buyPrice')} className={`${headerButtonClass('buyPrice')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'buyPrice' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             Buy Price <SortIcon column="buyPrice" />
+            <ColInfo text="Price per unit you pay at the buy station (lowest sell order)." />
           </button>
 
-          <button
-            onClick={() => handleSort('sellPrice')}
-            className={`${headerButtonClass('sellPrice')} text-right font-mono`}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'sellPrice'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
+          <button onClick={() => handleSort('sellPrice')} className={`${headerButtonClass('sellPrice')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'sellPrice' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             Sell Price <SortIcon column="sellPrice" />
+            <ColInfo text="Price per unit you receive at the sell station (highest buy order)." />
           </button>
 
-          <button
-            onClick={() => handleSort('roi')}
-            className={`${headerButtonClass('roi')} text-right font-mono`}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'roi'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
+          <button onClick={() => handleSort('roi')} className={`${headerButtonClass('roi')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'roi' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             ROI% <SortIcon column="roi" />
+            <ColInfo text="Return on Investment. Formula: (Sell Price − Buy Price) / Buy Price × 100." />
           </button>
 
-          <button
-            onClick={() => handleSort('volumeAvailable')}
-            className={`${headerButtonClass('volumeAvailable')} text-right font-mono`}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'volumeAvailable'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
+          <button onClick={() => handleSort('volumeAvailable')} className={`${headerButtonClass('volumeAvailable')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'volumeAvailable' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             Volume <SortIcon column="volumeAvailable" />
+            <ColInfo text="Units available to trade right now, capped by whichever side (buy or sell orders) has less stock." />
           </button>
 
-          <button
-            onClick={() => handleSort('profitPerUnit')}
-            className={`${headerButtonClass('profitPerUnit')} text-right font-mono`}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'profitPerUnit'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
+          <button onClick={() => handleSort('profitPerUnit')} className={`${headerButtonClass('profitPerUnit')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'profitPerUnit' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             Profit/Unit <SortIcon column="profitPerUnit" />
+            <ColInfo text="ISK profit per unit before taxes and broker fees. Formula: Sell Price − Buy Price." />
           </button>
 
-          <button
-            onClick={() => handleSort('maxProfit')}
-            className={`${headerButtonClass('maxProfit')} text-right font-mono`}
-            role="columnheader"
-            aria-sort={
-              sortColumn === 'maxProfit'
-                ? sortDirection === 'asc'
-                  ? 'ascending'
-                  : 'descending'
-                : 'none'
-            }
-          >
+          <button onClick={() => handleSort('maxProfit')} className={`${headerButtonClass('maxProfit')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'maxProfit' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             Max Profit <SortIcon column="maxProfit" />
+            <ColInfo text="Total profit if you trade the full available Volume. Formula: Profit/Unit × Volume. Actual profit will be lower after taxes and broker fees." />
           </button>
         </div>
       </div>

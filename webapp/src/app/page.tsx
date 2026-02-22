@@ -6,6 +6,7 @@ import { RegionSelector } from '@/components/RegionSelector';
 import { DataFreshness } from '@/components/DataFreshness';
 import { FreshDataNotification } from '@/components/FreshDataNotification';
 import { NoDataYetBanner } from '@/components/NoDataYetBanner';
+import { AppVersionBanner } from '@/components/AppVersionBanner';
 import { OpportunityTable } from '@/components/OpportunityTable';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
@@ -128,6 +129,9 @@ function HomePageContent() {
 
   return (
     <div className="min-h-screen theme-bg-primary">
+      {/* App Version Banner */}
+      <AppVersionBanner />
+
       {/* No Data Yet Banner */}
       <NoDataYetBanner />
 
@@ -300,6 +304,7 @@ function HomePageContent() {
               opportunities.length > 0 && (
                 <OpportunityTable
                   data={opportunities}
+                  regionKey={`${buyMarket?.regionId}-${sellMarket?.regionId}`}
                   onRefresh={() => refetchOpportunities()}
                   isRefreshing={opportunitiesFetching}
                 />

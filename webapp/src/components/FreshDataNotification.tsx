@@ -36,15 +36,17 @@ export function FreshDataNotification({ currentDataTimestamp }: FreshDataNotific
     retry: 3,
   });
 
-  // Auto-refresh data when new data is detected
+  // Auto-refresh data when new data is detected.
+  // Cache invalidation is ALWAYS done regardless of dismissed state —
+  // only the banner display is gated by dismissed.
   useEffect(() => {
-    if (!currentDataTimestamp || !metadata || dismissed) return;
+    if (!currentDataTimestamp || !metadata) return;
     const currentDate = new Date(currentDataTimestamp);
     const latestDate = new Date(metadata.lastGenerated);
     if (latestDate > currentDate) {
       queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-      setDismissed(false); // show the toast
-      // Auto-dismiss after 3 seconds
+      // Reset dismissed so the toast shows again for this new data event
+      setDismissed(false);
       const timer = setTimeout(() => setDismissed(true), 3000);
       return () => clearTimeout(timer);
     }

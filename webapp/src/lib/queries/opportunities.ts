@@ -26,7 +26,7 @@ async function fetchOpportunities(
   params: OpportunitiesParams
 ): Promise<OpportunitiesResponse> {
   // Fetch from static JSON file: /data/{buyRegion}-{sellRegion}.json
-  const response = await fetch(dataUrl(`${params.buyRegion}-${params.sellRegion}.json`));
+  const response = await fetch(dataUrl(`${params.buyRegion}-${params.sellRegion}.json`), { cache: 'no-store' });
 
   if (!response.ok) {
     if (response.status === 404) {
