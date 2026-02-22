@@ -352,19 +352,19 @@ async function generateStaticJSON() {
 
   console.log(`  → ${allTypeIds.size} unique items, ${allLocationIds.size} unique stations`);
 
-  // --- Resolve names from ESI in parallel (20 concurrent requests) ---
+  // --- Resolve names from ESI — items and stations run in parallel, 50 concurrent each ---
   const typeNames = new Map<number, string>();
   const locationNames = new Map<number, string>();
 
-  console.log(`\nResolving ${allTypeIds.size} item names from ESI...`);
-  await resolveInBatches([...allTypeIds], 20, async (typeId) => {
-    typeNames.set(typeId, await fetchTypeName(typeId));
-  });
-
-  console.log(`Resolving ${allLocationIds.size} station names from ESI...`);
-  await resolveInBatches([...allLocationIds], 20, async (locationId) => {
-    locationNames.set(locationId, await fetchLocationName(locationId));
-  });
+  console.log(`\nResolving ${allTypeIds.size} item names + ${allLocationIds.size} station names from ESI (parallel)...`);
+  await Promise.all([
+    resolveInBatches([...allTypeIds], 50, async (typeId) => {
+      typeNames.set(typeId, await fetchTypeName(typeId));
+    }),
+    resolveInBatches([...allLocationIds], 50, async (locationId) => {
+      locationNames.set(locationId, await fetchLocationName(locationId));
+    }),
+  ]);
 
   console.log('✅ Names resolved.');
 
