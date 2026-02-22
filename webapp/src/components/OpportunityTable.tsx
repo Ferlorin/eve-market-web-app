@@ -1,9 +1,10 @@
 'use client';
 
 import { useRef, useState, useMemo, useEffect } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/20/solid';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline';
+
+const PAGE_SIZE = 10;
 
 export interface Opportunity {
   typeId: number;
@@ -38,9 +39,9 @@ interface OpportunityTableProps {
 }
 
 export function OpportunityTable({ data, onRefresh, isRefreshing = false }: OpportunityTableProps) {
-  const parentRef = useRef<HTMLDivElement>(null);
   const [sortColumn, setSortColumn] = useState<SortColumn>('roi');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
 
   // Filter state
   const [minMaxProfit, setMinMaxProfit] = useState<string>('');
@@ -84,6 +85,7 @@ export function OpportunityTable({ data, onRefresh, isRefreshing = false }: Oppo
     if (dataRef.current !== data) {
       setMinMaxProfit('');
       setMinROI('');
+      setDisplayCount(PAGE_SIZE);
       dataRef.current = data;
     }
   }, [data]);
@@ -174,27 +176,14 @@ export function OpportunityTable({ data, onRefresh, isRefreshing = false }: Oppo
     return sorted;
   }, [data, sortColumn, sortDirection, debouncedMinMaxProfit, debouncedMinROI]);
 
-  const virtualizer = useVirtualizer({
-    count: filteredAndSortedData.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 48,
-    overscan: 10,
-  });
-
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
-      // Toggle direction if same column
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      // New column: default to descending for numbers, ascending for text
       setSortColumn(column);
       setSortDirection(column === 'itemName' ? 'asc' : 'desc');
     }
-
-    // Scroll to top after sort
-    if (parentRef.current) {
-      parentRef.current.scrollTop = 0;
-    }
+    setDisplayCount(PAGE_SIZE);
   };
 
   const SortIcon = ({ column }: { column: SortColumn }) => {
@@ -495,95 +484,60 @@ export function OpportunityTable({ data, onRefresh, isRefreshing = false }: Oppo
         </div>
       </div>
 
-      {/* Scrollable Table Body with Virtual Scrolling */}
-      <div
-        ref={parentRef}
-        className="h-[600px] overflow-auto scrollbar-thin"
-        role="rowgroup"
-      >
-        <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            width: '100%',
-            position: 'relative',
-          }}
-        >
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const opportunity = filteredAndSortedData[virtualRow.index];
-            const isEven = virtualRow.index % 2 === 0;
-
-            return (
-              <div
-                key={virtualRow.key}
-                className={`absolute top-0 left-0 w-full ${
-                  isEven ? 'theme-row-even' : 'theme-row-odd'
-                }`}
-                style={{
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-                role="row"
-              >
-                <div className="grid grid-cols-9 gap-4 px-4 py-2 items-center h-full min-w-0 [&>div]:min-w-0">
-                  {/* Item Name */}
-                  <div className="text-sm theme-text-primary truncate" role="cell" title={opportunity.itemName}>
-                    {opportunity.itemName}
-                  </div>
-
-                  {/* Buy Station */}
-                  <div className="text-sm theme-text-secondary text-center truncate" role="cell" title={opportunity.buyStation}>
-                    {opportunity.buyStation}
-                  </div>
-
-                  {/* Sell Station */}
-                  <div className="text-sm theme-text-secondary text-center truncate" role="cell" title={opportunity.sellStation}>
-                    {opportunity.sellStation}
-                  </div>
-
-                  {/* Buy Price */}
-                  <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
-                    {formatPrice(opportunity.buyPrice)}
-                  </div>
-
-                  {/* Sell Price */}
-                  <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
-                    {formatPrice(opportunity.sellPrice)}
-                  </div>
-
-                  {/* ROI % */}
-                  <div className="text-sm text-eve-blue text-right font-mono font-semibold" role="cell">
-                    {formatROI(opportunity.roi)}
-                  </div>
-
-                  {/* Volume */}
-                  <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
-                    {formatVolume(opportunity.volumeAvailable)}
-                  </div>
-
-                  {/* Profit Per Unit */}
-                  <div className="text-sm theme-text-success text-right font-mono font-semibold" role="cell">
-                    {formatPrice(opportunity.profitPerUnit)}
-                  </div>
-
-                  {/* Max Profit */}
-                  <div className="text-sm theme-text-success-bold text-right font-mono font-bold" role="cell">
-                    {formatPrice(opportunity.maxProfit)}
-                  </div>
-                </div>
+      {/* Table Body */}
+      <div role="rowgroup">
+        {filteredAndSortedData.slice(0, displayCount).map((opportunity, index) => (
+          <div
+            key={opportunity.typeId}
+            className={`${index % 2 === 0 ? 'theme-row-even' : 'theme-row-odd'}`}
+            role="row"
+          >
+            <div className="grid grid-cols-9 gap-4 px-4 py-2 items-center min-w-0 [&>div]:min-w-0">
+              <div className="text-sm theme-text-primary truncate" role="cell" title={opportunity.itemName}>
+                {opportunity.itemName}
               </div>
-            );
-          })}
-        </div>
+              <div className="text-sm theme-text-secondary text-center truncate" role="cell" title={opportunity.buyStation}>
+                {opportunity.buyStation}
+              </div>
+              <div className="text-sm theme-text-secondary text-center truncate" role="cell" title={opportunity.sellStation}>
+                {opportunity.sellStation}
+              </div>
+              <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
+                {formatPrice(opportunity.buyPrice)}
+              </div>
+              <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
+                {formatPrice(opportunity.sellPrice)}
+              </div>
+              <div className="text-sm text-eve-blue text-right font-mono font-semibold" role="cell">
+                {formatROI(opportunity.roi)}
+              </div>
+              <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
+                {formatVolume(opportunity.volumeAvailable)}
+              </div>
+              <div className="text-sm theme-text-success text-right font-mono font-semibold" role="cell">
+                {formatPrice(opportunity.profitPerUnit)}
+              </div>
+              <div className="text-sm theme-text-success-bold text-right font-mono font-bold" role="cell">
+                {formatPrice(opportunity.maxProfit)}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Footer with Row Count and Sort Info */}
-      <div className="border-t theme-border theme-bg-primary px-4 py-2 flex justify-between items-center">
+      {/* Footer: row count + Load More */}
+      <div className="border-t theme-border theme-bg-primary px-4 py-3 flex justify-between items-center gap-4">
         <p className="text-xs theme-text-secondary">
-          Showing {filteredAndSortedData.length.toLocaleString()} opportunities
+          Showing {Math.min(displayCount, filteredAndSortedData.length).toLocaleString()} of {filteredAndSortedData.length.toLocaleString()} opportunities
         </p>
-        <p className="text-xs theme-text-secondary">
-          Sorted by {sortColumn} ({sortDirection})
-        </p>
+        {displayCount < filteredAndSortedData.length && (
+          <button
+            onClick={() => setDisplayCount(c => c + PAGE_SIZE)}
+            className="px-4 py-1.5 text-sm font-medium rounded border theme-border theme-bg-secondary theme-text-primary hover:bg-eve-blue/10 transition-colors focus:outline-none focus:ring-2 focus:ring-eve-blue"
+          >
+            Load more
+          </button>
+        )}
       </div>
     </div>
   );
