@@ -2,7 +2,7 @@ name: Fetch and Deploy Static (Static-Cache Architecture)
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Every 15 minutes
+    - cron: '*/30 * * * *'  # Every 15 minutes
   workflow_dispatch:
   # Removed push trigger to reduce deployments and avoid hitting Vercel free tier limits
   # Use workflow_dispatch (manual trigger) for deploying code changes
