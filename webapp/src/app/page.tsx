@@ -6,7 +6,6 @@ import { RegionSelector } from '@/components/RegionSelector';
 import { DataFreshness } from '@/components/DataFreshness';
 import { FreshDataNotification } from '@/components/FreshDataNotification';
 import { NoDataYetBanner } from '@/components/NoDataYetBanner';
-import { AutoRefreshBanner } from '@/components/AutoRefreshBanner';
 import { OpportunityTable } from '@/components/OpportunityTable';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
@@ -129,9 +128,6 @@ function HomePageContent() {
 
   return (
     <div className="min-h-screen theme-bg-primary">
-      {/* Auto-refresh banner (detects new deployments) */}
-      <AutoRefreshBanner />
-
       {/* No Data Yet Banner */}
       <NoDataYetBanner />
 

@@ -198,7 +198,7 @@ async function fetchRegionToJson(
         event: 'region_saved',
         regionId,
         ordersCount: allOrders.length,
-        pages: page - 1,
+        pages: totalPages,
         filename,
         fileSizeMB: (fs.statSync(filepath).size / 1024 / 1024).toFixed(2)
       });
