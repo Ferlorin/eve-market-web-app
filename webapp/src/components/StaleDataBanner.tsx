@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/solid';
+import { metadataUrl } from '@/lib/data-url';
 
 interface MetadataResponse {
   lastGenerated: string;
 }
 
 async function fetchMetadata(): Promise<MetadataResponse> {
-  const response = await fetch('/data/metadata.json');
+  const response = await fetch(metadataUrl(), { cache: 'no-store' });
   if (!response.ok) {
     throw new Error('Failed to fetch metadata');
   }

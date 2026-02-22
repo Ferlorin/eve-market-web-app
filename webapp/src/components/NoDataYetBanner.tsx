@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { metadataUrl } from '@/lib/data-url';
 
 interface MetadataResponse {
   lastGenerated: string;
@@ -9,7 +10,7 @@ interface MetadataResponse {
 
 async function checkMetadata(): Promise<MetadataResponse | null> {
   try {
-    const response = await fetch('/data/metadata.json');
+    const response = await fetch(metadataUrl(), { cache: 'no-store' });
     if (!response.ok) return null;
     return response.json();
   } catch {

@@ -167,10 +167,12 @@ jobs:
 
   # PHASE 2: Generate static JSON files and deploy to Vercel
   # NO DATABASE - Pure static file generation
-  generate-and-deploy:
+  generate-and-publish:
     needs: [fetch-forge-split, fetch-domain-split, fetch-high-volume-json, fetch-chunks-json]
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write  # Required to push to gh-pages branch
 
     steps:
       - uses: actions/checkout@v4
@@ -200,36 +202,29 @@ jobs:
       - name: Generate static JSON files
         working-directory: webapp
         run: npx tsx scripts/generate-static-json.ts
-        # Creates webapp/public/data/*.json (NOT committed to git)
+        # Creates webapp/public/data/*.json
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-
-      # Deploy to PRODUCTION (schedule, manual, or push to main)
-      # Run from REPO ROOT - let Vercel's "Root Directory: webapp" handle subdirectory
-      # VERCEL_PROJECT_ID env var ensures deployment to correct project
-      - name: Pull Vercel Environment Information (Production)
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Build Project Artifacts (Production)
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Deploy to Production
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Deployment Summary
+      - name: Publish data to GitHub Pages (gh-pages branch)
         run: |
-          echo "✅ Production deployment complete!"
-          echo "🌍 Deployed to Vercel PRODUCTION Edge CDN"
-          echo "⚡ Response time: 20-50ms globally"
-          echo "📁 JSON files generated in public/data/ (not in git)"
+          # Prepare a clean publish directory with just the data files
+          mkdir -p gh-pages-publish/data
+          cp webapp/public/data/*.json gh-pages-publish/data/
+          # .nojekyll prevents GitHub Pages from treating this as a Jekyll site
+          touch gh-pages-publish/.nojekyll
+
+          cd gh-pages-publish
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Market data update $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          # Force-push as orphan to keep the branch lean (no history buildup)
+          git push --force \
+            https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git \
+            HEAD:gh-pages
+
+      - name: Summary
+        run: |
+          echo "✅ Market data published to GitHub Pages!"
+          echo "📁 Files: $(ls webapp/public/data/*.json | wc -l) JSON files"
           echo "🔄 Trigger: ${{ github.event_name }}"
