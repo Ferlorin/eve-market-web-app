@@ -356,7 +356,7 @@ export function OpportunityTable({ data, regionKey, onRefresh, isRefreshing = fa
         className="border-b theme-border theme-bg-primary"
         role="rowgroup"
       >
-        <div className="grid grid-cols-9 gap-4 px-4 py-3" role="row">
+        <div className="grid grid-cols-[3fr_3fr_3fr_2fr_2fr_1.5fr_1.5fr_2fr_2fr] gap-4 px-4 py-3" role="row">
           <button onClick={() => handleSort('itemName')} className={headerButtonClass('itemName')} role="columnheader" aria-sort={sortColumn === 'itemName' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
             Item <SortIcon column="itemName" />
             <ColInfo text="The item being traded." />
@@ -412,14 +412,14 @@ export function OpportunityTable({ data, regionKey, onRefresh, isRefreshing = fa
             className={`${index % 2 === 0 ? 'theme-row-even' : 'theme-row-odd'}`}
             role="row"
           >
-            <div className="grid grid-cols-9 gap-4 px-4 py-2 items-center min-w-0 [&>div]:min-w-0">
-              <div className="text-sm theme-text-primary truncate" role="cell" title={opportunity.itemName}>
+            <div className="grid grid-cols-[3fr_3fr_3fr_2fr_2fr_1.5fr_1.5fr_2fr_2fr] gap-4 px-4 py-2 items-start min-w-0 [&>div]:min-w-0">
+              <div className="text-sm theme-text-primary break-words leading-snug" role="cell">
                 {opportunity.itemName}
               </div>
-              <div className="text-sm theme-text-secondary text-center truncate" role="cell" title={opportunity.buyStation}>
+              <div className="text-sm theme-text-secondary text-center break-words leading-snug" role="cell">
                 {opportunity.buyStation}
               </div>
-              <div className="text-sm theme-text-secondary text-center truncate" role="cell" title={opportunity.sellStation}>
+              <div className="text-sm theme-text-secondary text-center break-words leading-snug" role="cell">
                 {opportunity.sellStation}
               </div>
               <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
