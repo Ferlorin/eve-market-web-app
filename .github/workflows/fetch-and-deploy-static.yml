@@ -168,7 +168,7 @@ jobs:
           path: webapp/market-data-artifacts/*.json
           retention-days: 1
 
-  # PHASE 2: Generate static JSON files and deploy to Vercel
+  # PHASE 2: Generate static JSON files, publish data, and deploy app to Cloudflare Pages
   # NO DATABASE - Pure static file generation
   generate-and-publish:
     needs: [fetch-forge-split, fetch-domain-split, fetch-high-volume-json, fetch-chunks-json]
@@ -226,8 +226,10 @@ jobs:
             https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git \
             HEAD:gh-pages
 
+
       - name: Summary
         run: |
           echo "✅ Market data published to GitHub Pages!"
+          echo "✅ App deployed to Cloudflare Pages!"
           echo "📁 Files: $(ls webapp/public/data/*.json | wc -l) JSON files"
           echo "🔄 Trigger: ${{ github.event_name }}"
