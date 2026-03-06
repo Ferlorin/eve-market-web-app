@@ -408,7 +408,7 @@ export function OpportunityTable({ data, regionKey, onRefresh, isRefreshing = fa
       <div role="rowgroup">
         {filteredAndSortedData.slice(0, displayCount).map((opportunity, index) => (
           <div
-            key={opportunity.typeId}
+            key={index}
             className={`${index % 2 === 0 ? 'theme-row-even' : 'theme-row-odd'}`}
             role="row"
           >

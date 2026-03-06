@@ -185,24 +185,31 @@ type PriceEntry = { price: number; volume: number; location: number };
  * Pre-compute per-region price maps once so large regions (e.g. The Forge 444k orders)
  * are only scanned once regardless of how many pairs they appear in.
  *
- * lowestSell: lowest sell-order price per typeId  → what you pay to BUY in this region
- * highestBuy: highest buy-order price per typeId  → what you GET when SELLING in this region
+ * allSell: cheapest sell-order price per (typeId, locationId) → all stations where you can BUY
+ * highestBuy: highest buy-order price per typeId              → what you GET when SELLING in this region
  */
 function buildRegionPriceMaps(data: RegionData): {
-  lowestSell: Map<number, PriceEntry>;
+  allSell: Map<number, PriceEntry[]>;
   highestBuy: Map<number, PriceEntry>;
 } {
-  const lowestSell = new Map<number, PriceEntry>();
+  // Temp map: typeId → locationId → cheapest sell entry at that station
+  const sellByTypeLocation = new Map<number, Map<number, PriceEntry>>();
   const highestBuy = new Map<number, PriceEntry>();
 
   for (const order of data.orders) {
     const price = Number(order.price);
-    const entry: PriceEntry = { price, volume: order.volume_remain, location: Number(order.location_id) };
+    const location = Number(order.location_id);
+    const entry: PriceEntry = { price, volume: order.volume_remain, location };
 
     if (!order.is_buy_order) {
-      // Sell order: track lowest price (cheapest place to buy)
-      const existing = lowestSell.get(order.type_id);
-      if (!existing || price < existing.price) lowestSell.set(order.type_id, entry);
+      // Sell order: track cheapest price per unique station
+      let byLocation = sellByTypeLocation.get(order.type_id);
+      if (!byLocation) {
+        byLocation = new Map<number, PriceEntry>();
+        sellByTypeLocation.set(order.type_id, byLocation);
+      }
+      const existing = byLocation.get(location);
+      if (!existing || price < existing.price) byLocation.set(location, entry);
     } else {
       // Buy order: track highest price (best place to sell)
       const existing = highestBuy.get(order.type_id);
@@ -210,7 +217,13 @@ function buildRegionPriceMaps(data: RegionData): {
     }
   }
 
-  return { lowestSell, highestBuy };
+  // Convert inner location maps to flat arrays
+  const allSell = new Map<number, PriceEntry[]>();
+  sellByTypeLocation.forEach((byLocation, typeId) => {
+    allSell.set(typeId, [...byLocation.values()]);
+  });
+
+  return { allSell, highestBuy };
 }
 
 /**
@@ -229,30 +242,34 @@ function calculateOpportunitiesFromMaps(
     sellLocationId: number;
   }> = [];
 
-  // For each item we can BUY in the buy-region, check if we can SELL it at profit in the sell-region
-  buyRegionMaps.lowestSell.forEach((buyData, typeId) => {
+  // For each item we can BUY in the buy-region, check all stations against the best sell price in the sell-region
+  buyRegionMaps.allSell.forEach((sellEntries: PriceEntry[], typeId: number) => {
     const sellData = sellRegionMaps.highestBuy.get(typeId);
     if (!sellData) return;
 
-    const buyPrice = buyData.price;
     const sellPrice = sellData.price;
-    const profitPerUnit = sellPrice - buyPrice;
-    const roi = (profitPerUnit / buyPrice) * 100;
-    const volumeAvailable = Math.min(buyData.volume, sellData.volume);
-    const maxProfit = profitPerUnit * volumeAvailable;
 
-    if (roi > 0 && buyPrice > 0 && sellPrice > 0 && isFinite(roi)) {
-      opportunities.push({
-        typeId,
-        buyPrice: Math.round(buyPrice * 100) / 100,
-        sellPrice: Math.round(sellPrice * 100) / 100,
-        profitPerUnit: Math.round(profitPerUnit * 100) / 100,
-        buyLocationId: buyData.location,
-        sellLocationId: sellData.location,
-        roi: Math.round(roi * 100) / 100,
-        volumeAvailable,
-        maxProfit: Math.round(maxProfit * 100) / 100,
-      });
+    for (const buyEntry of sellEntries) {
+      const buyPrice = buyEntry.price;
+      const profitPerUnit = sellPrice - buyPrice;
+      const roi = (profitPerUnit / buyPrice) * 100;
+
+      if (roi > 0 && buyPrice > 0 && sellPrice > 0 && isFinite(roi)) {
+        const volumeAvailable = Math.min(buyEntry.volume, sellData.volume);
+        const maxProfit = profitPerUnit * volumeAvailable;
+
+        opportunities.push({
+          typeId,
+          buyPrice: Math.round(buyPrice * 100) / 100,
+          sellPrice: Math.round(sellPrice * 100) / 100,
+          profitPerUnit: Math.round(profitPerUnit * 100) / 100,
+          buyLocationId: buyEntry.location,
+          sellLocationId: sellData.location,
+          roi: Math.round(roi * 100) / 100,
+          volumeAvailable,
+          maxProfit: Math.round(maxProfit * 100) / 100,
+        });
+      }
     }
   });
 
@@ -336,7 +353,7 @@ async function generateStaticJSON() {
       const opps = calculateOpportunitiesFromMaps(
         regionPriceMaps.get(buyRegionId)!,
         regionPriceMaps.get(sellRegionId)!
-      ).slice(0, 1000);
+      ).slice(0, 2000);
       for (const opp of opps) {
         allTypeIds.add(opp.typeId);
         allLocationIds.add(opp.buyLocationId);
@@ -374,7 +391,7 @@ async function generateStaticJSON() {
       const sellMaps = regionPriceMaps.get(sellRegionId)!;
 
       const opportunities = calculateOpportunitiesFromMaps(buyMaps, sellMaps);
-      const topOpportunities = opportunities.slice(0, 1000);
+      const topOpportunities = opportunities.slice(0, 2000);
 
       const outputOpportunities: Opportunity[] = topOpportunities
         .filter(opp =>
