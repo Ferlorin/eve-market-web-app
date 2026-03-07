@@ -20,12 +20,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark');
-  const [mounted, setMounted] = useState(false);
 
   // Initialize theme on mount
   useEffect(() => {
-    setMounted(true);
-
     // Check localStorage first
     const storedTheme = localStorage.getItem('theme') as Theme | null;
 
@@ -45,10 +42,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
-    
-    // Remove both classes first
+
     document.documentElement.classList.remove('light', 'dark');
-    // Add the appropriate class
     document.documentElement.classList.add(newTheme);
   };
 
@@ -56,20 +51,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  // Apply theme class on mount and theme change
+  // Apply theme class when theme changes
   useEffect(() => {
-    if (mounted) {
-      // Remove both classes first
-      document.documentElement.classList.remove('light', 'dark');
-      // Add the current theme class
-      document.documentElement.classList.add(theme);
-    }
-  }, [theme, mounted]);
-
-  // Prevent flash of wrong theme
-  if (!mounted) {
-    return <>{children}</>;
-  }
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+  }, [theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
