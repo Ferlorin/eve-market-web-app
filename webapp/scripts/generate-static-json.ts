@@ -17,6 +17,17 @@ import { logger } from '../src/lib/logger';
 // Regions below this threshold are likely sparse null-sec/low-sec with no real market.
 const MIN_ORDERS = 1000;
 
+// Capital ship group IDs that CANNOT enter high-security space (security >= 0.5).
+// Buy orders in high-sec for these ships are not fulfillable and should be excluded.
+// Freighters (513) and Jump Freighters (902) can travel in high-sec and are intentionally omitted.
+const HIGHSEC_BANNED_CAPITAL_GROUPS = new Set([
+  485,  // Dreadnought
+  547,  // Carrier
+  659,  // Supercarrier
+  30,   // Titan
+  883,  // Force Auxiliary
+]);
+
 interface MarketOrder {
   order_id: number;
   type_id: number;
@@ -76,34 +87,53 @@ async function fetchRegionName(regionId: number): Promise<string> {
 }
 
 /**
- * Fetch item name from ESI
+ * Fetch item name and group ID from ESI
  */
-async function fetchTypeName(typeId: number): Promise<string> {
+async function fetchTypeInfo(typeId: number): Promise<{ name: string; groupId: number | null }> {
   try {
     const res = await fetch(`https://esi.evetech.net/latest/universe/types/${typeId}/`);
-    if (!res.ok) return `Item ${typeId}`;
-    const data = await res.json() as { name?: string };
-    return data.name ?? `Item ${typeId}`;
+    if (!res.ok) return { name: `Item ${typeId}`, groupId: null };
+    const data = await res.json() as { name?: string; group_id?: number };
+    return { name: data.name ?? `Item ${typeId}`, groupId: data.group_id ?? null };
   } catch {
-    return `Item ${typeId}`;
+    return { name: `Item ${typeId}`, groupId: null };
   }
 }
 
+// Cache solar system security status to avoid redundant ESI calls
+const solarSystemSecurityCache = new Map<number, number>();
+
 /**
- * Fetch station name from ESI. Returns null for player structures (require OAuth).
+ * Fetch station name and solar system security status from ESI.
+ * Returns null name for player structures (require OAuth).
  */
-async function fetchLocationName(locationId: number): Promise<string | null> {
+async function fetchLocationInfo(locationId: number): Promise<{ name: string | null; securityStatus: number | null }> {
   if (locationId >= 100_000_000) {
     // Player structure (citadel) — requires OAuth, skip
-    return null;
+    return { name: null, securityStatus: null };
   }
   try {
-    const res = await fetch(`https://esi.evetech.net/latest/universe/stations/${locationId}/`);
-    if (!res.ok) return `Station ${locationId}`;
-    const data = await res.json() as { name?: string };
-    return data.name ?? `Station ${locationId}`;
+    const stationRes = await fetch(`https://esi.evetech.net/latest/universe/stations/${locationId}/`);
+    if (!stationRes.ok) return { name: `Station ${locationId}`, securityStatus: null };
+    const station = await stationRes.json() as { name?: string; system_id?: number };
+    const name = station.name ?? `Station ${locationId}`;
+
+    if (!station.system_id) return { name, securityStatus: null };
+
+    const systemId = station.system_id;
+    if (solarSystemSecurityCache.has(systemId)) {
+      return { name, securityStatus: solarSystemSecurityCache.get(systemId)! };
+    }
+
+    const sysRes = await fetch(`https://esi.evetech.net/latest/universe/systems/${systemId}/`);
+    if (!sysRes.ok) return { name, securityStatus: null };
+    const system = await sysRes.json() as { security_status?: number };
+    const securityStatus = system.security_status ?? null;
+    if (securityStatus !== null) solarSystemSecurityCache.set(systemId, securityStatus);
+
+    return { name, securityStatus };
   } catch {
-    return `Station ${locationId}`;
+    return { name: `Station ${locationId}`, securityStatus: null };
   }
 }
 
@@ -366,15 +396,21 @@ async function generateStaticJSON() {
 
   // --- Resolve names from ESI — items and stations run in parallel, 50 concurrent each ---
   const typeNames = new Map<number, string>();
+  const typeGroups = new Map<number, number | null>();
   const locationNames = new Map<number, string | null>();
+  const locationSecStatus = new Map<number, number | null>();
 
   console.log(`\nResolving ${allTypeIds.size} item names + ${allLocationIds.size} station names from ESI (parallel)...`);
   await Promise.all([
     resolveInBatches([...allTypeIds], 50, async (typeId) => {
-      typeNames.set(typeId, await fetchTypeName(typeId));
+      const info = await fetchTypeInfo(typeId);
+      typeNames.set(typeId, info.name);
+      typeGroups.set(typeId, info.groupId);
     }),
     resolveInBatches([...allLocationIds], 50, async (locationId) => {
-      locationNames.set(locationId, await fetchLocationName(locationId));
+      const info = await fetchLocationInfo(locationId);
+      locationNames.set(locationId, info.name);
+      locationSecStatus.set(locationId, info.securityStatus);
     }),
   ]);
 
@@ -394,10 +430,22 @@ async function generateStaticJSON() {
       const topOpportunities = opportunities.slice(0, 2000);
 
       const outputOpportunities: Opportunity[] = topOpportunities
-        .filter(opp =>
-          locationNames.get(opp.buyLocationId) !== null &&
-          locationNames.get(opp.sellLocationId) !== null
-        )
+        .filter(opp => {
+          if (locationNames.get(opp.buyLocationId) === null) return false;
+          if (locationNames.get(opp.sellLocationId) === null) return false;
+
+          // Exclude capital ships that cannot enter high-sec if the buy order is in high-sec.
+          // The sell location is where the buy order sits (where you deliver the goods).
+          const sellSecStatus = locationSecStatus.get(opp.sellLocationId);
+          if (sellSecStatus !== null && sellSecStatus !== undefined && sellSecStatus >= 0.5) {
+            const groupId = typeGroups.get(opp.typeId);
+            if (groupId !== null && groupId !== undefined && HIGHSEC_BANNED_CAPITAL_GROUPS.has(groupId)) {
+              return false;
+            }
+          }
+
+          return true;
+        })
         .map(opp => ({
           typeId: opp.typeId,
           itemName: typeNames.get(opp.typeId) ?? `Item ${opp.typeId}`,
