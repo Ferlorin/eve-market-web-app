@@ -26,6 +26,7 @@ const HIGHSEC_BANNED_CAPITAL_GROUPS = new Set([
   659,  // Supercarrier
   30,   // Titan
   883,  // Force Auxiliary
+  941,  // Industrial Capital Ship (Rorqual)
 ]);
 
 interface MarketOrder {
