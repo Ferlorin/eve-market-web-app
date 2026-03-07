@@ -6,6 +6,8 @@ import { ArrowPathIcon, XMarkIcon, InformationCircleIcon } from '@heroicons/reac
 
 const PAGE_SIZE = 10;
 
+const DEFAULT_COLUMN_WIDTHS = [200, 200, 200, 130, 130, 90, 90, 130, 130];
+
 export interface Opportunity {
   typeId: number;
   itemName: string;
@@ -52,6 +54,9 @@ export function OpportunityTable({ data, regionKey, onRefresh, isRefreshing = fa
   // Debounced filter values
   const [debouncedMinMaxProfit, setDebouncedMinMaxProfit] = useState<string>('');
   const [debouncedMinROI, setDebouncedMinROI] = useState<string>('');
+
+  // Column widths for resizable columns
+  const [columnWidths, setColumnWidths] = useState<number[]>(DEFAULT_COLUMN_WIDTHS);
 
   // Restore table state from localStorage on mount
   useEffect(() => {
@@ -187,9 +192,36 @@ export function OpportunityTable({ data, regionKey, onRefresh, isRefreshing = fa
     setDisplayCount(PAGE_SIZE);
   };
 
+  const handleResizeMouseDown = (e: React.MouseEvent, colIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = columnWidths[colIndex];
+
+    const handleMouseMove = (moveE: MouseEvent) => {
+      const delta = moveE.clientX - startX;
+      const newWidth = Math.max(60, startWidth + delta);
+      setColumnWidths(prev => {
+        const next = [...prev];
+        next[colIndex] = newWidth;
+        return next;
+      });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const gridStyle = { gridTemplateColumns: columnWidths.map(w => `${w}px`).join(' ') };
+
   const SortIcon = ({ column }: { column: SortColumn }) => {
     if (sortColumn !== column) return null;
-    
+
     return sortDirection === 'asc' ? (
       <ChevronUpIcon className="h-4 w-4 inline ml-1" />
     ) : (
@@ -232,6 +264,15 @@ export function OpportunityTable({ data, regionKey, onRefresh, isRefreshing = fa
     >
       <InformationCircleIcon className="h-3.5 w-3.5" />
     </span>
+  );
+
+  // Resize handle rendered at the right edge of each header cell
+  const ResizeHandle = ({ colIndex }: { colIndex: number }) => (
+    <div
+      className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none z-10 hover:bg-eve-blue/40 active:bg-eve-blue/60"
+      onMouseDown={(e) => handleResizeMouseDown(e, colIndex)}
+      aria-hidden="true"
+    />
   );
 
   if (data.length === 0) {
@@ -351,98 +392,128 @@ export function OpportunityTable({ data, regionKey, onRefresh, isRefreshing = fa
         )}
       </div>
 
-      {/* Fixed Table Header with Sortable Columns */}
-      <div
-        className="border-b theme-border theme-bg-primary"
-        role="rowgroup"
-      >
-        <div className="grid grid-cols-[3fr_3fr_3fr_2fr_2fr_1.5fr_1.5fr_2fr_2fr] gap-4 px-4 py-3" role="row">
-          <button onClick={() => handleSort('itemName')} className={headerButtonClass('itemName')} role="columnheader" aria-sort={sortColumn === 'itemName' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
-            Item <SortIcon column="itemName" />
-            <ColInfo text="The item being traded." />
-          </button>
+      {/* Scrollable table area */}
+      <div className="overflow-x-auto">
+        {/* Fixed Table Header with Sortable + Resizable Columns */}
+        <div
+          className="border-b theme-border theme-bg-primary"
+          role="rowgroup"
+        >
+          <div className="grid gap-4 px-4 py-3" style={gridStyle} role="row">
+            <div className="relative">
+              <button onClick={() => handleSort('itemName')} className={headerButtonClass('itemName')} role="columnheader" aria-sort={sortColumn === 'itemName' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                Item <SortIcon column="itemName" />
+                <ColInfo text="The item being traded." />
+              </button>
+              <ResizeHandle colIndex={0} />
+            </div>
 
-          <button onClick={() => handleSort('buyStation')} className={`${headerButtonClass('buyStation')} text-center`} role="columnheader" aria-sort={sortColumn === 'buyStation' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
-            Buy Station <SortIcon column="buyStation" />
-            <ColInfo text="Where you buy the item — the station with the cheapest sell order." />
-          </button>
+            <div className="relative">
+              <button onClick={() => handleSort('buyStation')} className={`${headerButtonClass('buyStation')} text-center`} role="columnheader" aria-sort={sortColumn === 'buyStation' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                Buy Station <SortIcon column="buyStation" />
+                <ColInfo text="Where you buy the item — the station with the cheapest sell order." />
+              </button>
+              <ResizeHandle colIndex={1} />
+            </div>
 
-          <button onClick={() => handleSort('sellStation')} className={`${headerButtonClass('sellStation')} text-center`} role="columnheader" aria-sort={sortColumn === 'sellStation' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
-            Sell Station <SortIcon column="sellStation" />
-            <ColInfo text="Where you sell the item after hauling it — the station with the highest buy order." />
-          </button>
+            <div className="relative">
+              <button onClick={() => handleSort('sellStation')} className={`${headerButtonClass('sellStation')} text-center`} role="columnheader" aria-sort={sortColumn === 'sellStation' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                Sell Station <SortIcon column="sellStation" />
+                <ColInfo text="Where you sell the item after hauling it — the station with the highest buy order." />
+              </button>
+              <ResizeHandle colIndex={2} />
+            </div>
 
-          <button onClick={() => handleSort('buyPrice')} className={`${headerButtonClass('buyPrice')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'buyPrice' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
-            Buy Price <SortIcon column="buyPrice" />
-            <ColInfo text="Price per unit you pay at the buy station (lowest sell order)." />
-          </button>
+            <div className="relative">
+              <button onClick={() => handleSort('buyPrice')} className={`${headerButtonClass('buyPrice')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'buyPrice' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                Buy Price <SortIcon column="buyPrice" />
+                <ColInfo text="Price per unit you pay at the buy station (lowest sell order)." />
+              </button>
+              <ResizeHandle colIndex={3} />
+            </div>
 
-          <button onClick={() => handleSort('sellPrice')} className={`${headerButtonClass('sellPrice')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'sellPrice' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
-            Sell Price <SortIcon column="sellPrice" />
-            <ColInfo text="Price per unit you receive at the sell station (highest buy order)." />
-          </button>
+            <div className="relative">
+              <button onClick={() => handleSort('sellPrice')} className={`${headerButtonClass('sellPrice')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'sellPrice' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                Sell Price <SortIcon column="sellPrice" />
+                <ColInfo text="Price per unit you receive at the sell station (highest buy order)." />
+              </button>
+              <ResizeHandle colIndex={4} />
+            </div>
 
-          <button onClick={() => handleSort('roi')} className={`${headerButtonClass('roi')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'roi' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
-            ROI% <SortIcon column="roi" />
-            <ColInfo text="Return on Investment. Formula: (Sell Price − Buy Price) / Buy Price × 100." />
-          </button>
+            <div className="relative">
+              <button onClick={() => handleSort('roi')} className={`${headerButtonClass('roi')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'roi' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                ROI% <SortIcon column="roi" />
+                <ColInfo text="Return on Investment. Formula: (Sell Price − Buy Price) / Buy Price × 100." />
+              </button>
+              <ResizeHandle colIndex={5} />
+            </div>
 
-          <button onClick={() => handleSort('volumeAvailable')} className={`${headerButtonClass('volumeAvailable')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'volumeAvailable' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
-            Volume <SortIcon column="volumeAvailable" />
-            <ColInfo text="Units available to trade right now, capped by whichever side (buy or sell orders) has less stock." />
-          </button>
+            <div className="relative">
+              <button onClick={() => handleSort('volumeAvailable')} className={`${headerButtonClass('volumeAvailable')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'volumeAvailable' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                Volume <SortIcon column="volumeAvailable" />
+                <ColInfo text="Units available to trade right now, capped by whichever side (buy or sell orders) has less stock." />
+              </button>
+              <ResizeHandle colIndex={6} />
+            </div>
 
-          <button onClick={() => handleSort('profitPerUnit')} className={`${headerButtonClass('profitPerUnit')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'profitPerUnit' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
-            Profit/Unit <SortIcon column="profitPerUnit" />
-            <ColInfo text="ISK profit per unit before taxes and broker fees. Formula: Sell Price − Buy Price." />
-          </button>
+            <div className="relative">
+              <button onClick={() => handleSort('profitPerUnit')} className={`${headerButtonClass('profitPerUnit')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'profitPerUnit' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                Profit/Unit <SortIcon column="profitPerUnit" />
+                <ColInfo text="ISK profit per unit before taxes and broker fees. Formula: Sell Price − Buy Price." />
+              </button>
+              <ResizeHandle colIndex={7} />
+            </div>
 
-          <button onClick={() => handleSort('maxProfit')} className={`${headerButtonClass('maxProfit')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'maxProfit' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
-            Max Profit <SortIcon column="maxProfit" />
-            <ColInfo text="Total profit if you trade the full available Volume. Formula: Profit/Unit × Volume. Actual profit will be lower after taxes and broker fees." />
-          </button>
-        </div>
-      </div>
-
-      {/* Table Body */}
-      <div role="rowgroup">
-        {filteredAndSortedData.slice(0, displayCount).map((opportunity, index) => (
-          <div
-            key={index}
-            className={`${index % 2 === 0 ? 'theme-row-even' : 'theme-row-odd'}`}
-            role="row"
-          >
-            <div className="grid grid-cols-[3fr_3fr_3fr_2fr_2fr_1.5fr_1.5fr_2fr_2fr] gap-4 px-4 py-2 items-start min-w-0 [&>div]:min-w-0">
-              <div className="text-sm theme-text-primary break-words leading-snug" role="cell">
-                {opportunity.itemName}
-              </div>
-              <div className="text-sm theme-text-secondary text-center break-words leading-snug" role="cell">
-                {opportunity.buyStation}
-              </div>
-              <div className="text-sm theme-text-secondary text-center break-words leading-snug" role="cell">
-                {opportunity.sellStation}
-              </div>
-              <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
-                {formatPrice(opportunity.buyPrice)}
-              </div>
-              <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
-                {formatPrice(opportunity.sellPrice)}
-              </div>
-              <div className="text-sm text-eve-blue text-right font-mono font-semibold" role="cell">
-                {formatROI(opportunity.roi)}
-              </div>
-              <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
-                {formatVolume(opportunity.volumeAvailable)}
-              </div>
-              <div className="text-sm theme-text-success text-right font-mono font-semibold" role="cell">
-                {formatPrice(opportunity.profitPerUnit)}
-              </div>
-              <div className="text-sm theme-text-success-bold text-right font-mono font-bold" role="cell">
-                {formatPrice(opportunity.maxProfit)}
-              </div>
+            <div className="relative">
+              <button onClick={() => handleSort('maxProfit')} className={`${headerButtonClass('maxProfit')} text-right font-mono`} role="columnheader" aria-sort={sortColumn === 'maxProfit' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                Max Profit <SortIcon column="maxProfit" />
+                <ColInfo text="Total profit if you trade the full available Volume. Formula: Profit/Unit × Volume. Actual profit will be lower after taxes and broker fees." />
+              </button>
+              {/* No resize handle on last column */}
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* Table Body */}
+        <div role="rowgroup">
+          {filteredAndSortedData.slice(0, displayCount).map((opportunity, index) => (
+            <div
+              key={index}
+              className={`${index % 2 === 0 ? 'theme-row-even' : 'theme-row-odd'}`}
+              role="row"
+            >
+              <div className="grid gap-4 px-4 py-2 items-start" style={gridStyle}>
+                <div className="text-sm theme-text-primary break-words leading-snug" role="cell">
+                  {opportunity.itemName}
+                </div>
+                <div className="text-sm theme-text-secondary text-center break-words leading-snug" role="cell">
+                  {opportunity.buyStation}
+                </div>
+                <div className="text-sm theme-text-secondary text-center break-words leading-snug" role="cell">
+                  {opportunity.sellStation}
+                </div>
+                <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
+                  {formatPrice(opportunity.buyPrice)}
+                </div>
+                <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
+                  {formatPrice(opportunity.sellPrice)}
+                </div>
+                <div className="text-sm text-eve-blue text-right font-mono font-semibold" role="cell">
+                  {formatROI(opportunity.roi)}
+                </div>
+                <div className="text-sm theme-text-secondary text-right font-mono" role="cell">
+                  {formatVolume(opportunity.volumeAvailable)}
+                </div>
+                <div className="text-sm theme-text-success text-right font-mono font-semibold" role="cell">
+                  {formatPrice(opportunity.profitPerUnit)}
+                </div>
+                <div className="text-sm theme-text-success-bold text-right font-mono font-bold" role="cell">
+                  {formatPrice(opportunity.maxProfit)}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Footer: row count + Load More */}
