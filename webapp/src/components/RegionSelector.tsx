@@ -3,7 +3,19 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Combobox } from '@headlessui/react';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid';
-import { Region } from '@/lib/regions';
+import { Region, SolarSystem } from '@/lib/regions';
+
+interface DropdownEntry {
+  key: string;
+  /** Primary label shown in the dropdown */
+  label: string;
+  /** Dimmed secondary label (region name for system entries, system names for region entries) */
+  subLabel?: string;
+  /** The region this entry resolves to */
+  region: Region;
+  /** True when this entry represents a system rather than a region directly */
+  isSystem: boolean;
+}
 
 interface RegionSelectorProps {
   label: string;
@@ -11,16 +23,18 @@ interface RegionSelectorProps {
   value: Region | null;
   onChange: (region: Region | null) => void;
   regions: Region[];
+  systems?: SolarSystem[];
   disabled?: boolean;
   autoFocus?: boolean;
 }
 
 export function RegionSelector({
   label,
-  placeholder = 'Search regions...',
+  placeholder = 'Search regions or systems...',
   value,
   onChange,
   regions,
+  systems = [],
   disabled = false,
   autoFocus = false
 }: RegionSelectorProps) {
@@ -34,31 +48,65 @@ export function RegionSelector({
     }
   }, [autoFocus]);
 
-  // Fuzzy search implementation
-  const filteredRegions = useMemo(() => {
-    if (query === '') return regions;
+  // Build dropdown entries from both regions and systems
+  const dropdownEntries = useMemo((): DropdownEntry[] => {
+    if (query === '') {
+      // Empty state: show all regions with their notable systems as hint
+      return regions.map(r => ({
+        key: `r-${r.regionId}`,
+        label: r.name,
+        subLabel: r.notableSystems?.join(', '),
+        region: r,
+        isSystem: false,
+      }));
+    }
 
     const lowerQuery = query.toLowerCase();
+    const entries: DropdownEntry[] = [];
+    const addedRegionIds = new Set<number>();
 
-    return regions.filter((region) => {
+    // Regions matching by name or fuzzy
+    regions.forEach(region => {
       const lowerName = region.name.toLowerCase();
+      let matched = lowerName.includes(lowerQuery);
+      if (!matched) {
+        let qi = 0;
+        for (let i = 0; i < lowerName.length && qi < lowerQuery.length; i++) {
+          if (lowerName[i] === lowerQuery[qi]) qi++;
+        }
+        matched = qi === lowerQuery.length;
+      }
+      if (matched) {
+        entries.push({
+          key: `r-${region.regionId}`,
+          label: region.name,
+          subLabel: region.notableSystems?.join(', '),
+          region,
+          isSystem: false,
+        });
+        addedRegionIds.add(region.regionId);
+      }
+    });
 
-      // Exact match or substring match on region name
-      if (lowerName.includes(lowerQuery)) return true;
-
-      // Match on notable systems (e.g. "Jita" → The Forge)
-      if (region.notableSystems?.some(s => s.toLowerCase().includes(lowerQuery))) return true;
-
-      // Fuzzy match on region name: all query chars appear in order
-      let queryIndex = 0;
-      for (let i = 0; i < lowerName.length && queryIndex < lowerQuery.length; i++) {
-        if (lowerName[i] === lowerQuery[queryIndex]) {
-          queryIndex++;
+    // Systems matching by name — each resolves to its parent region
+    systems.forEach(system => {
+      if (system.systemName.toLowerCase().includes(lowerQuery)) {
+        const region = regions.find(r => r.regionId === system.regionId);
+        if (region && !addedRegionIds.has(region.regionId)) {
+          entries.push({
+            key: `s-${system.systemName}`,
+            label: system.systemName,
+            subLabel: region.name,
+            region,
+            isSystem: true,
+          });
+          addedRegionIds.add(region.regionId);
         }
       }
-      return queryIndex === lowerQuery.length;
     });
-  }, [query, regions]);
+
+    return entries;
+  }, [query, regions, systems]);
 
   return (
     <div className="w-full">
@@ -74,8 +122,8 @@ export function RegionSelector({
             <div className="relative">
               <Combobox.Input
                 ref={inputRef}
-                className="w-full rounded-lg border theme-border theme-bg-secondary py-2 pl-3 pr-10 theme-text-primary placeholder:text-gray-500 
-                  focus:border-eve-blue focus:outline-none focus:ring-2 focus:ring-eve-blue focus:ring-offset-2 focus:ring-offset-gray-900 
+                className="w-full rounded-lg border theme-border theme-bg-secondary py-2 pl-3 pr-10 theme-text-primary placeholder:text-gray-500
+                  focus:border-eve-blue focus:outline-none focus:ring-2 focus:ring-eve-blue focus:ring-offset-2 focus:ring-offset-gray-900
                   focus-visible:ring-2 focus-visible:ring-eve-blue focus-visible:ring-offset-2
                   disabled:cursor-not-allowed disabled:opacity-50
                   sm:text-sm transition-colors"
@@ -83,20 +131,18 @@ export function RegionSelector({
                 displayValue={(region: Region | null) => region?.name ?? ''}
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={(event) => {
-                  // Open dropdown on arrow down when closed
                   if (event.key === 'ArrowDown' && !open) {
                     event.preventDefault();
                     inputRef.current?.click();
                   }
-                  // Close dropdown on Escape
                   if (event.key === 'Escape') {
                     setQuery('');
                   }
                 }}
               />
-              
-              <Combobox.Button 
-                className="absolute inset-y-0 right-0 flex items-center rounded-r-lg px-2 
+
+              <Combobox.Button
+                className="absolute inset-y-0 right-0 flex items-center rounded-r-lg px-2
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-eve-blue focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                 aria-label="Toggle region dropdown"
               >
@@ -108,16 +154,16 @@ export function RegionSelector({
             </div>
 
             {/* Dropdown Options */}
-            {filteredRegions.length > 0 && (
-              <Combobox.Options 
-                className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border theme-border theme-bg-secondary py-1 text-base shadow-lg 
+            {dropdownEntries.length > 0 && (
+              <Combobox.Options
+                className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border theme-border theme-bg-secondary py-1 text-base shadow-lg
                   focus:outline-none sm:text-sm
                   scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
               >
-                {filteredRegions.map((region) => (
+                {dropdownEntries.map((entry) => (
                   <Combobox.Option
-                    key={region.regionId}
-                    value={region}
+                    key={entry.key}
+                    value={entry.region}
                     className={({ active }) =>
                       `relative cursor-pointer select-none py-2 pl-3 pr-9 transition-colors ${
                         active ? 'bg-eve-blue/20 theme-text-primary' : 'theme-text-secondary'
@@ -127,16 +173,12 @@ export function RegionSelector({
                     {({ active, selected }) => (
                       <>
                         <span className="flex items-baseline gap-2">
-                          <span
-                            className={`truncate ${
-                              selected ? 'font-semibold' : 'font-normal'
-                            }`}
-                          >
-                            {region.name}
+                          <span className={`truncate ${selected ? 'font-semibold' : 'font-normal'}`}>
+                            {entry.label}
                           </span>
-                          {region.notableSystems && region.notableSystems.length > 0 && (
-                            <span className="text-xs opacity-50 shrink-0">
-                              {region.notableSystems.join(', ')}
+                          {entry.subLabel && (
+                            <span className={`text-xs shrink-0 ${entry.isSystem ? 'opacity-60' : 'opacity-40'}`}>
+                              {entry.isSystem ? `→ ${entry.subLabel}` : entry.subLabel}
                             </span>
                           )}
                         </span>
@@ -158,9 +200,9 @@ export function RegionSelector({
             )}
 
             {/* No Results Message */}
-            {query !== '' && filteredRegions.length === 0 && (
+            {query !== '' && dropdownEntries.length === 0 && (
               <div className="absolute z-10 mt-1 w-full rounded-lg border theme-border theme-bg-secondary py-2 px-3 text-sm theme-text-secondary">
-                No regions found matching "{query}"
+                No regions or systems found matching &quot;{query}&quot;
               </div>
             )}
           </div>

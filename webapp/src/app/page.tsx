@@ -14,7 +14,7 @@ import { useRegions } from '@/lib/queries/regions';
 import { useOpportunities } from '@/lib/queries/opportunities';
 import { useQuery } from '@tanstack/react-query';
 import type { Region } from '@/lib/regions';
-import { TRADE_HUBS } from '@/lib/regions';
+import { TRADE_HUBS, NOTABLE_SYSTEMS } from '@/lib/regions';
 import { metadataUrl } from '@/lib/data-url';
 
 function HomePageContent() {
@@ -160,10 +160,11 @@ function HomePageContent() {
             <div className="flex-1 w-full space-y-2">
               <RegionSelector
                 label="Buy Market"
-                placeholder={hasData ? "Select region to buy from..." : "Waiting for market data..."}
+                placeholder={hasData ? "Search region or system..." : "Waiting for market data..."}
                 value={buyMarket}
                 onChange={setBuyMarket}
                 regions={regions ?? []}
+                systems={NOTABLE_SYSTEMS}
                 autoFocus
                 disabled={!hasData}
               />
@@ -176,7 +177,7 @@ function HomePageContent() {
                       key={hub.regionId}
                       onClick={() => region && setBuyMarket(region)}
                       disabled={!hasData || !region}
-                      className={`px-2 py-0.5 text-xs rounded-full border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                      className={`px-3 py-1 text-sm rounded-full border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                         isActive
                           ? 'border-eve-blue text-eve-blue bg-eve-blue/10'
                           : 'theme-border theme-text-secondary hover:border-eve-blue hover:text-eve-blue'
@@ -205,10 +206,11 @@ function HomePageContent() {
             <div className="flex-1 w-full space-y-2">
               <RegionSelector
                 label="Sell Market"
-                placeholder={hasData ? "Select region to sell in..." : "Waiting for market data..."}
+                placeholder={hasData ? "Search region or system..." : "Waiting for market data..."}
                 value={sellMarket}
                 onChange={setSellMarket}
                 regions={regions ?? []}
+                systems={NOTABLE_SYSTEMS}
                 disabled={!hasData}
               />
               <div className="flex flex-wrap gap-1.5">
@@ -220,7 +222,7 @@ function HomePageContent() {
                       key={hub.regionId}
                       onClick={() => region && setSellMarket(region)}
                       disabled={!hasData || !region}
-                      className={`px-2 py-0.5 text-xs rounded-full border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                      className={`px-3 py-1 text-sm rounded-full border transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                         isActive
                           ? 'border-eve-blue text-eve-blue bg-eve-blue/10'
                           : 'theme-border theme-text-secondary hover:border-eve-blue hover:text-eve-blue'
